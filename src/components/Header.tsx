@@ -1,0 +1,72 @@
+"use client";
+
+import { useState, useEffect } from "react";
+
+function timeAgo(ts: number): string {
+  const seconds = Math.floor((Date.now() - ts) / 1000);
+  if (seconds < 5) return "刚刚";
+  if (seconds < 60) return `${seconds} 秒前`;
+  const mins = Math.floor(seconds / 60);
+  if (mins < 60) return `${mins} 分钟前`;
+  const hours = Math.floor(mins / 60);
+  return `${hours} 小时前`;
+}
+
+export default function Header({
+  updatedAt,
+  onRefresh,
+  loading,
+}: {
+  updatedAt: number | null;
+  onRefresh: () => void;
+  loading: boolean;
+}) {
+  const [display, setDisplay] = useState("");
+
+  useEffect(() => {
+    if (!updatedAt) return;
+    setDisplay(timeAgo(updatedAt));
+    const id = setInterval(() => setDisplay(timeAgo(updatedAt)), 10000);
+    return () => clearInterval(id);
+  }, [updatedAt]);
+
+  return (
+    <header className="flex flex-col items-center gap-2 py-8 px-4 animate-header-in">
+      <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+        <span>🔥</span> 实时热搜聚合
+      </h1>
+      <p className="text-sm text-gray-500">
+        知乎 · B站 · 微博 — 一站式追踪中文互联网热点
+      </p>
+      <div className="flex items-center gap-3 mt-2">
+        {updatedAt && (
+          <span className="text-xs text-gray-500 font-mono">
+            更新于 {display}
+          </span>
+        )}
+        <button
+          onClick={onRefresh}
+          disabled={loading}
+          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full
+                     bg-white/5 hover:bg-white/10 text-gray-300 transition-colors
+                     disabled:opacity-50 border border-white/5"
+        >
+          <svg
+            className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+          刷新
+        </button>
+      </div>
+    </header>
+  );
+}
