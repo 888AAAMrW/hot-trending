@@ -42,7 +42,7 @@ export default function Header({
         <span>🔥</span> 实时热搜聚合
       </h1>
       <p className="text-sm text-gray-500">
-        微博 · 知乎 · B站 · 抖音 · 百度 · 头条 · 小红书 — 七大平台实时热点
+        七大主流平台 · 一站式实时热点追踪
       </p>
       <div className="flex items-center gap-3 mt-2">
         {updatedAt && (

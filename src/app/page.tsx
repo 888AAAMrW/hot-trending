@@ -118,7 +118,7 @@ export default function Home() {
           ].join(" ")}>
             {/* 分类 pill */}
             <div className="max-w-6xl mx-auto px-4 pt-2 pb-1">
-              <div className="flex gap-1.5 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: "none" }}>
+              <div className="flex gap-1.5 flex-wrap">
                 {CATEGORIES.map((cat) => {
                   const isActive = category === cat.key;
                   const count = categoryCounts.get(cat.key);
@@ -151,7 +151,7 @@ export default function Home() {
 
             {/* 平台开关（仅"全部"视图显示） */}
             {category === "全部" && (
-              <div className="max-w-6xl mx-auto px-4 pb-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none"
+              <div className="max-w-6xl mx-auto px-4 pb-2 flex items-center gap-1.5 flex-wrap"
                 style={{ scrollbarWidth: "none" }}>
                 <span className="text-[10px] text-white/25 mr-1 flex-shrink-0">平台:</span>
                 {Object.values(PLATFORM_META).map((m) => {
@@ -194,6 +194,7 @@ export default function Home() {
                   </div>
                   <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1"
                     style={{ scrollbarWidth: "none" }}>
+                    {/* Top 10 水平滚动保留 — 卡片较大，换行会很难看 */}
                     {top10.map((item, i) => (
                       <Top10Card key={`${item.platformId}-${item.rank}`} item={item} index={i} />
                     ))}
