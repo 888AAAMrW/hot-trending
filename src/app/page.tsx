@@ -6,7 +6,7 @@ import Starfield from "@/components/Starfield";
 import Header from "@/components/Header";
 import { classifyTitle, CATEGORIES } from "@/lib/categories";
 import { PLATFORM_META } from "@/lib/types";
-import type { TrendsResponse, HotItem, PlatformId } from "@/lib/types";
+import type { TrendsResponse, HotItem, PlatformId, PlatformData } from "@/lib/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -187,8 +187,14 @@ export default function Home() {
             </div>
           ) : (
             <>
-              {/* ─── 分类板块 ─── */}
-              {categorySections.length === 0 && category !== "全部" ? (
+              {/* ─── 全部视图：按平台分开展示 ─── */}
+              {category === "全部" ? (
+                <div className="space-y-6">
+                  {Object.entries(platforms!).map(([key, pdata]) => (
+                    <PlatformSection key={key} platformId={key as PlatformId} data={pdata} />
+                  ))}
+                </div>
+              ) : categorySections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 text-gray-500 gap-3">
                   <svg className="w-10 h-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                     <path strokeLinecap="round" strokeLinejoin="round"
@@ -197,6 +203,7 @@ export default function Home() {
                   <p className="text-sm">此分类下暂无热搜</p>
                 </div>
               ) : (
+                /* ─── 分类视图：领域聚合展示 ─── */
                 <div className="space-y-8">
                   {categorySections.map((section) => (
                     <CategorySection key={section.key} cat={section} />
@@ -212,6 +219,103 @@ export default function Home() {
         </main>
       </div>
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PlatformSection — "全部"视图下的单平台卡片
+// ═══════════════════════════════════════════════════════════
+
+function PlatformSection({ platformId, data }: { platformId: PlatformId; data: PlatformData }) {
+  const meta = PLATFORM_META[platformId];
+  const { items, error } = data;
+  const [expanded, setExpanded] = useState(false);
+  const preview = expanded ? items : items.slice(0, 10);
+  const hiddenCount = items.length - 10;
+
+  return (
+    <section
+      className="rounded-2xl overflow-hidden animate-card-in"
+      style={{
+        background: "rgba(8, 10, 24, 0.45)",
+        backdropFilter: "blur(20px) saturate(1.3)",
+        boxShadow: [
+          `0 0 0 1px rgba(255,255,255,0.05)`,
+          `0 0 0 3px ${meta.color}06`,
+          `0 0 40px ${meta.color}0A`,
+          `inset 0 1px 0 rgba(255,255,255,0.02)`,
+        ].join(", "),
+      }}
+    >
+      {/* 头部 */}
+      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b" style={{ borderColor: `${meta.color}15` }}>
+        <span className="text-base">{meta.emoji}</span>
+        <h2 className="text-sm font-semibold tracking-wider uppercase" style={{ color: "#e0e0e0" }}>
+          {meta.name}
+        </h2>
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-mono ml-auto"
+          style={{ backgroundColor: `${meta.color}12`, color: meta.color, border: `1px solid ${meta.color}25` }}>
+          {items.length}
+        </span>
+      </div>
+
+      {/* 列表 */}
+      {error ? (
+        <div className="flex flex-col items-center justify-center py-12 text-gray-500 gap-2">
+          <p className="text-sm">{error}</p>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-2">
+          <div className="flex gap-1">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce"
+                style={{ backgroundColor: meta.color, animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 tracking-wider">接收信号中...</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0.5 px-2 py-2">
+            {preview.map((item, i) => (
+              <PlatformItem key={`${item.rank}-${i}`} item={item} color={meta.color} />
+            ))}
+          </div>
+          {hiddenCount > 0 && (
+            <button onClick={() => setExpanded(!expanded)}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs
+                         transition-all duration-300 hover:bg-white/[0.03]"
+              style={{ color: `${meta.color}88`, borderTop: `1px solid ${meta.color}10` }}>
+              <span className="tracking-wider">
+                {expanded ? "收起" : `展开全部 (${hiddenCount} 条)`}
+              </span>
+            </button>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function PlatformItem({ item, color }: { item: HotItem; color: string }) {
+  return (
+    <a href={item.url} target="_blank" rel="noopener noreferrer"
+      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-150
+                 hover:bg-white/[0.04] min-h-[40px] group">
+      <span className={`flex-shrink-0 w-5 h-5 rounded-full inline-flex items-center justify-center text-[10px] font-bold
+        ${item.rank === 1 ? "bg-gradient-to-br from-yellow-300 to-orange-500 text-white" :
+          item.rank === 2 ? "bg-gradient-to-br from-slate-300 to-slate-500 text-white" :
+          item.rank === 3 ? "bg-gradient-to-br from-amber-600 to-amber-800 text-white" :
+          "text-gray-500 font-mono"}`}>
+        {item.rank}
+      </span>
+      <span className="flex-1 text-sm text-gray-200 truncate group-hover:text-white transition-colors">
+        {item.title}
+      </span>
+      {item.hotScore && (
+        <span className="flex-shrink-0 text-[11px] font-mono text-gray-500">{item.hotScore}</span>
+      )}
+    </a>
   );
 }
 
