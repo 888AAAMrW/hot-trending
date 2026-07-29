@@ -288,44 +288,71 @@ function PlatformSection({ platformId, data }: { platformId: PlatformId; data: P
 
   return (
     <section
-      className="rounded-2xl overflow-hidden animate-card-in group/section"
+      className="rounded-2xl overflow-hidden animate-card-in group/section relative
+                 transition-all duration-500 hover:-translate-y-0.5"
       style={{
-        background: "rgba(6, 8, 20, 0.5)",
+        background: `linear-gradient(175deg, ${meta.color}08 0%, rgba(6,8,20,0.5) 30%, rgba(6,8,20,0.5) 100%)`,
         backdropFilter: "blur(24px) saturate(1.2)",
         boxShadow: [
-          `0 0 0 1px rgba(255,255,255,0.04)`,
-          `0 0 0 3px ${meta.color}04`,
-          `0 0 40px ${meta.color}06`,
-          `inset 0 1px 0 rgba(255,255,255,0.015)`,
+          `0 0 0 1px rgba(255,255,255,0.05)`,
+          `0 0 0 3px ${meta.color}06`,
+          `0 4px 24px rgba(0,0,0,0.3)`,
+          `0 0 60px ${meta.color}08`,
+          `inset 0 1px 0 rgba(255,255,255,0.02)`,
         ].join(", "),
       }}>
+      {/* 悬停外发光 */}
+      <div className="absolute -inset-1 rounded-2xl opacity-0 group-hover/section:opacity-100
+                      transition-opacity duration-700 pointer-events-none -z-10"
+        style={{ background: `radial-gradient(ellipse at center, ${meta.color}12 0%, transparent 70%)`, filter: "blur(12px)" }} />
+
       {/* 顶部装饰线 */}
-      <div className="h-px opacity-30" style={{
-        background: `linear-gradient(90deg, transparent 5%, ${meta.color}50 30%, ${meta.color}70 50%, ${meta.color}50 70%, transparent 95%)`,
-      }} />
+      <div className="absolute top-0 left-5 right-5 h-px opacity-40 group-hover/section:opacity-70 transition-opacity duration-500"
+        style={{ background: `linear-gradient(90deg, transparent, ${meta.color}60 20%, ${meta.color}80 50%, ${meta.color}60 80%, transparent)` }} />
+
+      {/* 角落装饰 */}
+      <div className="absolute top-3 left-3 w-1 h-1 rounded-full opacity-20 group-hover/section:opacity-40 transition-opacity duration-500"
+        style={{ backgroundColor: meta.color, boxShadow: `0 0 6px ${meta.color}` }} />
+      <div className="absolute top-3 right-3 w-1 h-1 rounded-full opacity-20 group-hover/section:opacity-40 transition-opacity duration-500"
+        style={{ backgroundColor: meta.color, boxShadow: `0 0 6px ${meta.color}` }} />
 
       {/* 头部 */}
-      <div className="flex items-center gap-2.5 px-4 py-3"
-        style={{ borderBottom: `1px solid ${meta.color}10` }}>
-        <span className="text-base">{meta.emoji}</span>
+      <div className="relative flex items-center gap-3 px-4 py-3.5"
+        style={{ borderBottom: `1px solid ${meta.color}0D` }}>
+        <div className="relative flex-shrink-0">
+          <div className="absolute inset-0 rounded-full blur-sm opacity-30"
+            style={{ backgroundColor: meta.color }} />
+          <span className="relative text-lg">{meta.emoji}</span>
+        </div>
         <h2 className="text-sm font-semibold tracking-[0.12em] uppercase"
-          style={{ color: "#e0e0e0", textShadow: `0 0 20px ${meta.color}20` }}>
+          style={{ color: "#e8e8e8", textShadow: `0 0 20px ${meta.color}20` }}>
           {meta.name}
         </h2>
         <div className="flex-1" />
+        {/* 迷你趋势指示器 */}
+        <div className="flex items-center gap-1 mr-2">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="w-0.5 rounded-full"
+              style={{
+                height: `${6 + i * 4}px`,
+                backgroundColor: meta.color,
+                opacity: 0.3 + i * 0.2,
+              }} />
+          ))}
+        </div>
         <span className="text-[10px] px-2 py-0.5 rounded-full font-mono"
-          style={{ backgroundColor: `${meta.color}10`, color: meta.color, border: `1px solid ${meta.color}20` }}>
+          style={{ backgroundColor: `${meta.color}12`, color: meta.color, border: `1px solid ${meta.color}22` }}>
           {items.length}
         </span>
       </div>
 
       {/* 列表 */}
       {error ? (
-        <div className="flex flex-col items-center py-10 text-gray-500 gap-1.5">
+        <div className="flex flex-col items-center py-12 text-gray-500 gap-1.5">
           <p className="text-xs">{error}</p>
         </div>
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center py-10 gap-2">
+        <div className="flex flex-col items-center py-12 gap-2">
           <div className="flex gap-1">{[0,1,2].map(i => (
             <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce"
               style={{ backgroundColor: meta.color, animationDelay: `${i*0.15}s` }} />
@@ -334,7 +361,7 @@ function PlatformSection({ platformId, data }: { platformId: PlatformId; data: P
         </div>
       ) : (
         <>
-          <div className="divide-y" style={{ borderColor: `${meta.color}06` }}>
+          <div className="divide-y" style={{ borderColor: `${meta.color}05` }}>
             {preview.map((item) => (
               <PlatformItem key={`${item.rank}`} item={item} color={meta.color} maxHot={maxHot} />
             ))}
@@ -343,7 +370,7 @@ function PlatformSection({ platformId, data }: { platformId: PlatformId; data: P
             <button onClick={() => setExpanded(!expanded)}
               className="w-full py-2.5 text-xs tracking-wider transition-all duration-300
                          hover:bg-white/[0.02] active:bg-white/[0.04]"
-              style={{ color: `${meta.color}70`, borderTop: `1px solid ${meta.color}08` }}>
+              style={{ color: `${meta.color}80`, borderTop: `1px solid ${meta.color}08` }}>
               {expanded ? "▲ 收起" : `▼ 展开全部 (${hiddenCount} 条)`}
             </button>
           )}
@@ -359,18 +386,20 @@ function PlatformSection({ platformId, data }: { platformId: PlatformId; data: P
 
 function PlatformItem({ item, color, maxHot }: { item: HotItem; color: string; maxHot: number }) {
   const h = parseHot(item.hotScore);
-  const barWidth = maxHot > 0 ? Math.max(2, (h / maxHot) * 100) : 2;
+  const barPct = maxHot > 0 ? Math.max(1, (h / maxHot) * 100) : 1;
+  const isTop3 = item.rank <= 3;
 
   return (
     <a href={item.url} target="_blank" rel="noopener noreferrer"
-      className="flex items-center gap-2.5 px-3 py-2.5 transition-all duration-200
-                 hover:bg-white/[0.03] group/item min-h-[42px] relative overflow-hidden">
+      className="flex items-center gap-2.5 px-3 py-2 transition-all duration-200
+                 hover:bg-white/[0.04] group/item min-h-[42px] relative overflow-hidden">
       {/* 微型热度条 */}
-      <div className="absolute left-0 top-0 bottom-0 transition-all duration-500 ease-out"
+      <div className="absolute left-0 top-0 bottom-0 transition-all duration-700 ease-out"
         style={{
-          width: `${Math.min(barWidth, 100)}%`,
-          background: `linear-gradient(90deg, ${color}10, ${color}06, transparent)`,
-          opacity: 0.5,
+          width: `${Math.min(barPct, 100)}%`,
+          background: isTop3
+            ? `linear-gradient(90deg, ${color}15, ${color}04, transparent)`
+            : `linear-gradient(90deg, ${color}08, ${color}02, transparent)`,
         }} />
 
       {/* 排名 */}
@@ -379,8 +408,9 @@ function PlatformItem({ item, color, maxHot }: { item: HotItem; color: string; m
         item.rank === 1 ? "bg-gradient-to-br from-yellow-300 to-orange-500 text-white shadow-sm shadow-yellow-500/20" :
         item.rank === 2 ? "bg-gradient-to-br from-slate-300 to-slate-500 text-white" :
         item.rank === 3 ? "bg-gradient-to-br from-amber-600 to-amber-800 text-white" :
-        "text-gray-500 font-mono",
-      ].join(" ")}>
+        "text-gray-500 font-mono bg-transparent",
+      ].join(" ")}
+        style={item.rank <= 3 ? {} : { backgroundColor: `${color}08` }}>
         {item.rank}
       </span>
 
@@ -392,7 +422,8 @@ function PlatformItem({ item, color, maxHot }: { item: HotItem; color: string; m
 
       {/* 热度 */}
       {item.hotScore && (
-        <span className="flex-shrink-0 text-[10px] font-mono text-gray-500 relative z-10">
+        <span className="flex-shrink-0 text-[10px] font-mono relative z-10"
+          style={{ color: isTop3 ? `${color}aa` : "rgb(107,114,128)" }}>
           {item.hotScore}
         </span>
       )}
