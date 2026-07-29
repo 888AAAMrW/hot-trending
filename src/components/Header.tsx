@@ -32,6 +32,12 @@ export default function Header({
 
   return (
     <header className="flex flex-col items-center gap-2 py-8 px-4 animate-header-in">
+      <a
+        href="https://starrynova.cc"
+        className="mb-2 text-xs text-gray-600 hover:text-gray-400 transition-colors tracking-wider"
+      >
+        ← 返回星际基地
+      </a>
       <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
         <span>🔥</span> 实时热搜聚合
       </h1>
