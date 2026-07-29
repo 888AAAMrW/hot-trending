@@ -4,8 +4,11 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "实时热搜聚合 — 知乎·B站·微博",
-  description: "一站式追踪中文互联网实时热搜",
+  title: {
+    default: "实时热搜聚合",
+    template: "%s — Starry Nova",
+  },
+  description: "知乎 · B站 · 微博一站式热搜聚合",
 };
 
 export default function RootLayout({
