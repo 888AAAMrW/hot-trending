@@ -8,11 +8,14 @@ const BROWSER_HEADERS = {
   "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
 };
 
-async function safeFetch(url: string, referer: string): Promise<unknown> {
+/** 微博专用 Cookie（游客身份，绕过登录拦截） */
+const WEIBO_COOKIE = "SUB=_2AkMuwKiSf8NxqwJRmP0dxGniaY9yww_EieKmjcT5JRMxHRl-yT9kqmkStRB6OeJUKTq1tDzM8NvON1-eBLh6m4iX67IX; SUBP=0033WrSXqPxfM725Ws9jqgMF55529P9D9Wh4Biq4_qUqUJ6EOq0K_h.75NHD95QfShM0e0z4eheRWs4DqcjMi--NiK.Xi-2Ri--ciKn7i-zN; _s_tentry=weibo.com; Apache=9213372484341.753.1754293175178; SINAGLOBAL=9213372484341.753.1754293175178; ULV=1754293175179:1:1:1:9213372484341.753.1754293175178:";
+
+async function safeFetch(url: string, referer: string, extraHeaders?: Record<string, string>): Promise<unknown> {
   const res = await fetch(url, {
-    headers: { ...BROWSER_HEADERS, Referer: referer },
+    headers: { ...BROWSER_HEADERS, Referer: referer, ...extraHeaders },
     next: { revalidate: 60 },
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(10000),
   });
 
   if (!res.ok) {
@@ -36,6 +39,7 @@ async function fetchWeibo(): Promise<PlatformData> {
   const data = (await safeFetch(
     "https://weibo.com/ajax/side/hotSearch",
     "https://weibo.com/",
+    { Cookie: WEIBO_COOKIE },
   )) as { data?: { realtime?: WeiboRawItem[] } };
 
   const items: HotItem[] = (data?.data?.realtime ?? [])
