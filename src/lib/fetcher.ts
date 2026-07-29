@@ -46,10 +46,8 @@ async function fetchWeibo(): Promise<PlatformData> {
     .slice(0, 25)
     .map((item: WeiboRawItem, i: number) => {
       const title = item.word ?? "";
-      const rawUrl = item.scheme ?? item.url ?? "";
-      const url = rawUrl.startsWith("//")
-        ? `https:${rawUrl}`
-        : rawUrl || `https://s.weibo.com/weibo?q=${encodeURIComponent(title)}`;
+      // 始终使用搜索页链接，无需登录即可查看
+      const url = `https://s.weibo.com/weibo?q=${encodeURIComponent(title)}`;
       const hotScore =
         item.raw_hot != null
           ? formatHot(item.raw_hot)
