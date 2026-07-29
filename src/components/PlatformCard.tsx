@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { PlatformData } from "@/lib/types";
 import HotItem from "./HotItem";
 import OrbitalRings from "./OrbitalRings";

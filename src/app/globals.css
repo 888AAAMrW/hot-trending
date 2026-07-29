@@ -32,16 +32,6 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* ── 旧版背景（保留给不支持 canvas 的环境） ──── */
-
-.bg-grid {
-  background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(230, 22, 45, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(0, 102, 255, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 50%, rgba(251, 114, 153, 0.05) 0%, transparent 50%);
-  background-attachment: fixed;
-}
-
 /* ── 入场动画 ────────────────────────────────── */
 
 @keyframes header-slide-down {
@@ -57,12 +47,6 @@ body {
 @keyframes item-slide-up {
   0%   { opacity: 0; transform: translateY(12px); }
   100% { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes badge-pop {
-  0%   { opacity: 0; transform: scale(0); }
-  60%  { opacity: 1; transform: scale(1.25); }
-  100% { opacity: 1; transform: scale(1); }
 }
 
 /* ── 持续动画 ────────────────────────────────── */
@@ -114,12 +98,6 @@ body {
   animation: item-slide-up 0.4s ease-out forwards;
 }
 
-/* 徽章弹入 */
-.animate-badge-in {
-  opacity: 0;
-  animation: badge-pop 0.35s ease-out forwards;
-}
-
 /* ── 卡片太空漂浮 ────────────────────────────── */
 
 @keyframes float-slow {
@@ -132,43 +110,12 @@ body {
   50%      { transform: translateY(-4px); }
 }
 
-@keyframes aurora-border {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
 .animate-float-slow {
   animation: float-slow 6s ease-in-out infinite;
 }
 
 .animate-float-slower {
   animation: float-slower 8s ease-in-out infinite;
-}
-
-/* 极光边框 */
-.aurora-card {
-  position: relative;
-}
-.aurora-card::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(255,255,255,0.08),
-    rgba(120,150,255,0.15),
-    rgba(200,100,200,0.1),
-    rgba(255,255,255,0.08)
-  );
-  background-size: 300% 300%;
-  animation: aurora-border 8s ease infinite;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
 }
 
 /* 呼吸光晕 */
