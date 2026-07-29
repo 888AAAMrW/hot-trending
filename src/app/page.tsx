@@ -19,6 +19,7 @@ export default function Home() {
   const [category, setCategory] = useState("全部");
   const [platformFilter, setPlatformFilter] = useState<Set<PlatformId>>(new Set());
   const [stuck, setStuck] = useState(false);
+  const [showBackTop, setShowBackTop] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { data, error, isValidating, mutate } = useSWR<TrendsResponse>(
@@ -82,6 +83,13 @@ export default function Home() {
     );
     obs.observe(el);
     return () => obs.disconnect();
+  }, []);
+
+  // ── Back-to-top visibility ──
+  useEffect(() => {
+    const onScroll = () => setShowBackTop(window.scrollY > 600);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // ── 平台开关 ──
@@ -224,6 +232,25 @@ export default function Home() {
           </footer>
         </main>
       </div>
+
+      {/* ─── 回到顶部 ─── */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className={[
+          "fixed bottom-6 right-6 z-50 w-10 h-10 rounded-full",
+          "flex items-center justify-center",
+          "bg-white/10 hover:bg-white/20 backdrop-blur-xl",
+          "border border-white/10 hover:border-white/20",
+          "shadow-lg shadow-black/20",
+          "transition-all duration-300",
+          showBackTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none",
+        ].join(" ")}
+        aria-label="回到顶部"
+      >
+        <svg className="w-4 h-4 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+        </svg>
+      </button>
     </div>
   );
 }
