@@ -17,10 +17,10 @@ const PROJECTS = [
 export default function NavPage() {
   const [warpTarget, setWarpTarget] = useState<string | null>(null);
 
-  // 修复浏览器后退/左滑恢复 bfcache 时卡在白屏的问题
+  // 浏览器后退/左滑返回时，强制刷新确保页面正常显示
   useEffect(() => {
     const onShow = (e: PageTransitionEvent) => {
-      if (e.persisted) setWarpTarget(null);
+      if (e.persisted) window.location.reload();
     };
     window.addEventListener("pageshow", onShow);
     return () => window.removeEventListener("pageshow", onShow);
