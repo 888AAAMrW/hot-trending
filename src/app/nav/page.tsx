@@ -31,7 +31,7 @@ export default function NavPage() {
   }, []);
 
   const handleWarpComplete = useCallback(() => {
-    if (warpTarget) window.location.replace(warpTarget);
+    if (warpTarget) window.location.href = warpTarget;
   }, [warpTarget]);
 
   return (
