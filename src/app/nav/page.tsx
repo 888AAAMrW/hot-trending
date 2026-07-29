@@ -37,8 +37,8 @@ export default function NavPage() {
             <h1 className="text-4xl md:text-5xl font-bold text-white tracking-wider">
               ✦ Starry Nova ✦
             </h1>
-            <p className="mt-3 text-sm text-gray-500 tracking-[0.3em] uppercase">
-              深空观测站
+            <p className="mt-3 text-sm text-gray-500 tracking-wider">
+              从这里，跃向深空
             </p>
           </div>
 
