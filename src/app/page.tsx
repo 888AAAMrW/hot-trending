@@ -44,14 +44,14 @@ export default function Home() {
     }
     counts.set("全部", allItems.length);
 
-    // Top 10 跨平台热度排行
+    // Top 10
     const sorted = [...allItems].sort((a, b) => {
       const ha = parseHot(a.hotScore); const hb = parseHot(b.hotScore);
       return hb - ha;
     });
     const top10 = sorted.slice(0, 10);
 
-    // 分类分组
+    // 按分类分组
     const groups = new Map<string, TaggedItem[]>();
     for (const item of allItems) {
       const c = item.category;
@@ -59,18 +59,14 @@ export default function Home() {
       groups.get(c)!.push(item);
     }
 
-    const targetCats = category === "全部"
-      ? CATEGORIES.filter(c => c.key !== "全部" && c.key !== "其他")
-      : CATEGORIES.filter(c => c.key === category);
-
-    const sections = targetCats
-      .filter(c => category !== "全部" || (groups.has(c.key) && groups.get(c.key)!.length > 0))
-      .sort((a, b) => (groups.get(b.key)?.length ?? 0) - (groups.get(a.key)?.length ?? 0))
-      .map(c => ({ ...c, items: groups.get(c.key) ?? [] }));
-
-    const otherItems = groups.get("其他") ?? [];
-    if (otherItems.length > 0 && (category === "全部" || category === "其他")) {
-      sections.push({ ...CATEGORIES.find(c => c.key === "其他")!, items: otherItems });
+    // 构建板块列表：直接用 CATEGORIES 顺序，简单可靠
+    const sections: { key: string; label: string; emoji: string; items: TaggedItem[] }[] = [];
+    for (const cat of CATEGORIES) {
+      if (cat.key === "全部") continue;
+      if (category !== "全部" && cat.key !== category) continue; // 选具体分类时只保留该项
+      const items = groups.get(cat.key);
+      if (!items || items.length === 0) continue; // 无数据不显示
+      sections.push({ key: cat.key, label: cat.label, emoji: cat.emoji, items });
     }
 
     return { allTagged: allItems, categorySections: sections, categoryCounts: counts, top10 };
