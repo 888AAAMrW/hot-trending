@@ -184,21 +184,50 @@ function formatHot(num: number): string {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  Aggregator
+//  Aggregator + Fallback
 // ═══════════════════════════════════════════════════════════
+
+/** 主源失败后自动切备源 */
+async function withFallback(
+  name: string,
+  primary: () => Promise<PlatformData>,
+  fallback: (() => Promise<PlatformData>) | null,
+): Promise<PlatformData> {
+  try {
+    return await primary();
+  } catch (e) {
+    if (fallback) {
+      console.warn(`[${name}] 主源失败 (${(e as Error).message})，尝试备源…`);
+      try {
+        return await fallback();
+      } catch (e2) {
+        console.warn(`[${name}] 备源也失败: ${(e2 as Error).message}`);
+      }
+    }
+  }
+  // 两个都挂了，返回空数据带错误信息
+  const meta = PLATFORM_META[name as PlatformId];
+  return {
+    platform: name as PlatformId,
+    name: meta.name,
+    color: meta.color,
+    items: [],
+    error: "主备源均不可用",
+  };
+}
 
 const PLATFORM_KEYS: PlatformId[] = [
   "weibo", "zhihu", "bilibili", "douyin", "baidu", "toutiao", "xiaohongshu",
 ];
 
 const FETCHERS: Record<string, () => Promise<PlatformData>> = {
-  weibo: fetchWeibo,
-  zhihu: fetchZhihu,
-  bilibili: fetchBilibili,
-  douyin: fetchDouyin,
-  baidu: fetchBaidu,
-  toutiao: fetchToutiao,
-  xiaohongshu: fetchXiaohongshu,
+  weibo:       () => withFallback("weibo", fetchWeibo, () => fetchFrom60s("/weibo", "weibo")),
+  zhihu:       () => withFallback("zhihu", fetchZhihu, () => fetchFrom60s("/zhihu", "zhihu")),
+  bilibili:    () => withFallback("bilibili", fetchBilibili, () => fetchFrom60s("/bili", "bilibili")),
+  douyin:      () => withFallback("douyin", fetchDouyin, null),
+  baidu:       () => withFallback("baidu", fetchBaidu, null),
+  toutiao:     () => withFallback("toutiao", fetchToutiao, null),
+  xiaohongshu: () => withFallback("xiaohongshu", fetchXiaohongshu, null),
 };
 
 /** 并行抓取所有平台，任一家失败不影响其他 */
