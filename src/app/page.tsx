@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import useSWR from "swr";
 import Starfield from "@/components/Starfield";
 import Header from "@/components/Header";
-import { classifyTitle, CATEGORIES } from "@/lib/categories";
+import { CATEGORIES } from "@/lib/categories";
 import { PLATFORM_META } from "@/lib/types";
 import type { TrendsResponse, HotItem, PlatformId, PlatformData } from "@/lib/types";
 
@@ -38,7 +38,7 @@ export default function Home() {
 
     for (const [key, p] of Object.entries(platforms)) {
       for (const item of p.items) {
-        const cat = classifyTitle(item.title);
+        const cat = item.category || "其他";
         allItems.push({ ...item, platformId: key as PlatformId, category: cat });
         counts.set(cat, (counts.get(cat) ?? 0) + 1);
       }

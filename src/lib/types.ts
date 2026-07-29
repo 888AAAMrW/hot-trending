@@ -4,6 +4,8 @@ export interface HotItem {
   title: string;
   url: string;
   hotScore: string | null;
+  /** AI 分类结果（由服务端 API 填充） */
+  category?: string;
 }
 
 /** 平台标识 */
