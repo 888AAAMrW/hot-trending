@@ -7,12 +7,24 @@ import OrbitalRings from "./OrbitalRings";
 
 const PREVIEW_COUNT = 10;
 
-export default function PlatformCard({ data, index = 0 }: { data: PlatformData; index?: number }) {
+interface Props {
+  data: PlatformData;
+  /** 未筛选的原始数据，用于显示匹配计数 */
+  originalData?: PlatformData;
+  index?: number;
+  /** 当前激活的分类，"全部"时不显示标记 */
+  activeCategory?: string;
+}
+
+export default function PlatformCard({ data, originalData, index = 0, activeCategory }: Props) {
   const { name, color, items, error } = data;
   const [expanded, setExpanded] = useState(false);
 
   const visible = expanded ? items : items.slice(0, PREVIEW_COUNT);
   const hiddenCount = items.length - PREVIEW_COUNT;
+  const totalCount = originalData?.items.length ?? items.length;
+  const isFiltering = activeCategory && activeCategory !== "全部";
+  const noMatch = isFiltering && items.length === 0 && totalCount > 0;
 
   return (
     /* 第 1 层：漂浮 */
@@ -117,7 +129,7 @@ export default function PlatformCard({ data, index = 0 }: { data: PlatformData; 
                 border: `1px solid ${color}20`,
               }}
             >
-              {items.length}
+              {isFiltering ? `${items.length}/${totalCount}` : items.length}
             </span>
           </div>
 
@@ -133,16 +145,28 @@ export default function PlatformCard({ data, index = 0 }: { data: PlatformData; 
               </div>
             ) : items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <div className="flex gap-1">
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="w-1.5 h-1.5 rounded-full animate-bounce"
-                      style={{ backgroundColor: color, animationDelay: `${i * 0.15}s` }}
-                    />
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 tracking-wider uppercase">接收信号中...</p>
+                {noMatch ? (
+                  <>
+                    <svg className="w-10 h-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                      <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                    <p className="text-xs text-gray-500 tracking-wider">此分类下暂无内容</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex gap-1">
+                      {[0, 1, 2].map((i) => (
+                        <div
+                          key={i}
+                          className="w-1.5 h-1.5 rounded-full animate-bounce"
+                          style={{ backgroundColor: color, animationDelay: `${i * 0.15}s` }}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 tracking-wider uppercase">接收信号中...</p>
+                  </>
+                )}
               </div>
             ) : (
               <>

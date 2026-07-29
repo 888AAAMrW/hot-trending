@@ -15,9 +15,11 @@ interface Props {
   active: string;
   onChange: (key: "weibo" | "zhihu" | "bilibili") => void;
   platforms: Record<string, PlatformData>;
+  /** 当前分类下无匹配结果的平台 key 集合 */
+  emptyPlatforms?: Set<string>;
 }
 
-export default function PlatformTabs({ active, onChange, platforms }: Props) {
+export default function PlatformTabs({ active, onChange, platforms, emptyPlatforms }: Props) {
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
 
@@ -40,7 +42,6 @@ export default function PlatformTabs({ active, onChange, platforms }: Props) {
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     const dy = e.changedTouches[0].clientY - touchStartY.current;
 
-    // Only swipe if horizontal movement > vertical (avoid scroll conflicts)
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
       goTo(dx < 0 ? currentIndex + 1 : currentIndex - 1);
     }
@@ -56,6 +57,7 @@ export default function PlatformTabs({ active, onChange, platforms }: Props) {
             const p = platforms[tab.key];
             const count = p?.items?.length ?? 0;
             const color = p?.color ?? "#666";
+            const isEmpty = emptyPlatforms?.has(tab.key);
 
             return (
               <button
@@ -72,11 +74,10 @@ export default function PlatformTabs({ active, onChange, platforms }: Props) {
                   }`}
                 >
                   {tab.label}
-                  {count > 0 && (
-                    <span className="ml-1 text-[10px] opacity-60">({count})</span>
-                  )}
+                  <span className="ml-1 text-[10px] opacity-60">
+                    ({isEmpty ? "0" : count})
+                  </span>
                 </span>
-                {/* 激活指示条 */}
                 {isActive && (
                   <span
                     className="absolute bottom-0 left-1/4 right-1/4 h-0.5 rounded-full"
@@ -105,7 +106,6 @@ export default function PlatformTabs({ active, onChange, platforms }: Props) {
 
             return (
               <div key={tab.key} className="w-full flex-shrink-0 px-4 pb-4">
-                {/* 平台卡片（移动端全宽） */}
                 <MobilePlatformCard data={p} />
               </div>
             );
