@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Starfield from "@/components/Starfield";
 import WarpTransition from "@/components/WarpTransition";
 
@@ -17,12 +17,21 @@ const PROJECTS = [
 export default function NavPage() {
   const [warpTarget, setWarpTarget] = useState<string | null>(null);
 
+  // 修复浏览器后退/左滑恢复 bfcache 时卡在白屏的问题
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setWarpTarget(null);
+    };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, []);
+
   const handleClick = useCallback((url: string) => {
     setWarpTarget(url);
   }, []);
 
   const handleWarpComplete = useCallback(() => {
-    if (warpTarget) window.location.href = warpTarget;
+    if (warpTarget) window.location.replace(warpTarget);
   }, [warpTarget]);
 
   return (
