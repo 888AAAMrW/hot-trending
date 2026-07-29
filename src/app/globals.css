@@ -117,3 +117,9 @@ body {
 .breathe-glow {
   animation: breathe 4s ease-in-out infinite;
 }
+
+/* ── 隐藏滚动条 ────────────────────────────────── */
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
