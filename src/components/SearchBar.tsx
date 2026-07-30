@@ -17,12 +17,11 @@ export default function SearchBar({ items }: Props) {
   const [focused, setFocused] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiIds, setAiIds] = useState<string[] | null>(null);
+  const [aiQuery, setAiQuery] = useState(""); // 最后一次 AI 搜索的词
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  // 重置 AI 结果当搜索词改变
-  useEffect(() => { setAiIds(null); }, [query]);
 
   const fuzzyResults = useMemo(() => {
     if (!query.trim()) return [];
@@ -36,33 +35,51 @@ export default function SearchBar({ items }: Props) {
     return scored.slice(0, 20).map((s) => s.item);
   }, [items, query]);
 
-  // 合并结果：AI 优先，否则用模糊搜索
+  // 查询变化时：重置 AI 结果 + 延迟发起 AI 搜索
+  useEffect(() => {
+    setAiIds(null);
+    const q = query.trim();
+    if (!q || q.length < 2) return;
+
+    // 清除之前的定时器
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    // 400ms 后自动发起 AI 搜索
+    timerRef.current = setTimeout(() => {
+      doAISearch(q);
+    }, 400);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [query]);
+
+  // 合并结果：AI 优先
   const results = aiIds
     ? aiIds.map((id) => items.find((i) => `${i.platformId}:${i.rank}` === id)).filter(Boolean) as SearchableItem[]
     : fuzzyResults;
 
   const show = focused && query.trim().length > 0;
 
-  // AI 语义搜索
-  async function doAISearch() {
-    if (!query.trim() || aiLoading) return;
+  async function doAISearch(q: string) {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     setAiLoading(true);
 
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`, {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
         signal: controller.signal,
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as { results: string[]; fallback?: boolean };
+      if (!res.ok) return; // 静默失败，保留模糊结果
+      const data = (await res.json()) as { results: string[] };
       if (!controller.signal.aborted) {
         setAiIds(data.results);
+        setAiQuery(q);
       }
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
-        console.error("AI search failed:", e);
+        // 静默失败，模糊结果继续服务
       }
     } finally {
       if (!controller.signal.aborted) setAiLoading(false);
@@ -173,42 +190,21 @@ export default function SearchBar({ items }: Props) {
                 style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                 <span className="text-[10px] uppercase tracking-wider flex-1"
                   style={{ color: "var(--color-text-muted)" }}>
-                  {aiIds ? "AI 语义匹配" : "即时搜索"} · {results.length} 条
+                  {aiIds
+                    ? `AI 语义匹配 · ${results.length} 条`
+                    : aiLoading
+                      ? `即时搜索 · ${results.length} 条`
+                      : `搜索 · ${results.length} 条`}
                 </span>
-                {!aiIds && (
-                  <button
-                    onClick={doAISearch}
-                    disabled={aiLoading}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all duration-200 border"
-                    style={{
-                      background: "rgba(139,92,246,0.12)",
-                      borderColor: "rgba(139,92,246,0.3)",
-                      color: "#a78bfa",
-                    }}
-                  >
-                    {aiLoading ? (
-                      <>
-                        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        搜索中
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-xs">✨</span> AI 深度搜索
-                      </>
-                    )}
-                  </button>
-                )}
-                {aiIds && (
-                  <button
-                    onClick={() => setAiIds(null)}
-                    className="text-[10px] px-1.5 py-0.5 rounded transition-colors"
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
-                    返回即时搜索
-                  </button>
+                {aiLoading && (
+                  <span className="flex items-center gap-1 text-[10px]"
+                    style={{ color: "#a78bfa" }}>
+                    <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    AI 正在理解…
+                  </span>
                 )}
               </div>
               {results.map((item) => {
