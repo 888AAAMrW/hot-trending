@@ -1,7 +1,22 @@
 import { fetchAllPlatforms } from "@/lib/fetcher";
 import type { PlatformData } from "@/lib/types";
+import { checkRateLimit, getClientKey } from "@/lib/rate-limit";
 
 const CATEGORIES = ["金融", "科技", "教育", "娱乐", "体育", "社会", "国际", "其他"];
+
+/** 单标题最大字符数，防止 prompt 注入时填充超大输入 */
+const MAX_TITLE_LENGTH = 120;
+
+/** 过滤标题中的控制字符和 prompt 注入标记 */
+function sanitizeTitle(title: string): string {
+  return title
+    .slice(0, MAX_TITLE_LENGTH) // 截断过长标题
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "") // 去除控制字符（保留 \t \n）
+    .replace(/[{}]/g, "「」") // 替换花括号，防止 JSON/prompt 模板注入
+    .replace(/```/g, "") // 移除代码块标记
+    .replace(/<\/?[a-zA-Z]+>/g, "") // 移除 HTML 标签
+    .trim();
+}
 
 /** 用 DeepSeek 对一批标题批量分类 */
 async function classifyWithAI(titles: string[]): Promise<string[]> {
@@ -71,18 +86,37 @@ ${titles.map((t, i) => `${i + 1}. ${t}`).join("\n")}`;
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // ── 限流：30 req / 60s / IP ──
+  const clientKey = getClientKey(request);
+  const rate = checkRateLimit(clientKey, 30, 60_000);
+  if (!rate.allowed) {
+    return Response.json(
+      { error: "请求过于频繁，请稍后再试" },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((rate.reset - Date.now()) / 1000)),
+          "X-RateLimit-Limit": "30",
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": String(Math.ceil(rate.reset / 1000)),
+        },
+      },
+    );
+  }
+
   const data = await fetchAllPlatforms();
 
-  // 收集所有标题
+  // 收集所有标题（先做 sanitize）
   const allTitles: { platform: string; index: number; title: string }[] = [];
   for (const [, pdata] of Object.entries(data.platforms)) {
     for (let i = 0; i < pdata.items.length; i++) {
-      allTitles.push({ platform: pdata.platform, index: i, title: pdata.items[i].title });
+      const rawTitle = pdata.items[i].title;
+      allTitles.push({ platform: pdata.platform, index: i, title: sanitizeTitle(rawTitle) });
     }
   }
 
-  // AI 分类
+  // AI 分类（使用已 sanitize 的标题）
   const titles = allTitles.map((t) => t.title);
   const categories = await classifyWithAI(titles);
 
@@ -98,6 +132,9 @@ export async function GET() {
   return Response.json(data, {
     headers: {
       "Cache-Control": "public, s-maxage=60, stale-while-revalidate=30",
+      "X-RateLimit-Limit": "30",
+      "X-RateLimit-Remaining": String(rate.remaining),
+      "X-RateLimit-Reset": String(Math.ceil(rate.reset / 1000)),
     },
   });
 }
