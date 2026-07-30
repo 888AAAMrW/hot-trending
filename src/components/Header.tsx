@@ -31,31 +31,36 @@ export default function Header({
   }, [updatedAt]);
 
   return (
-    <header className="flex flex-col items-center gap-2 py-8 px-4 animate-header-in">
+    <header className="flex flex-col items-center gap-1.5 pt-6 pb-4 px-4 animate-header-in">
       <a
         href="https://starrynova.cc"
-        className="mb-2 text-xs text-gray-600 hover:text-gray-400 transition-colors tracking-wider"
+        className="mb-1 text-xs tracking-wider transition-colors hover:text-gray-400"
+        style={{ color: "var(--color-text-muted)" }}
       >
         ← 返回星际基地
       </a>
-      <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+      <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
         <span>🔥</span> 实时热搜聚合
       </h1>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm" style={{ color: "var(--color-text-tertiary)" }}>
         七大主流平台 · 一站式实时热点追踪
       </p>
-      <div className="flex items-center gap-3 mt-2">
+      <div className="flex items-center gap-3 mt-1.5">
         {updatedAt && (
-          <span className="text-xs text-gray-500 font-mono">
+          <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
             更新于 {display}
           </span>
         )}
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full
-                     bg-white/5 hover:bg-white/10 text-gray-300 transition-colors
-                     disabled:opacity-50 border border-white/5"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full
+                     transition-all duration-200 disabled:opacity-50 border"
+          style={{
+            background: "var(--color-surface-elevated)",
+            borderColor: "var(--color-border-subtle)",
+            color: "var(--color-text-secondary)",
+          }}
         >
           <svg
             className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
