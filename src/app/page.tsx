@@ -216,9 +216,13 @@ export default function Home() {
               ) : (
                 /* ── 分类视图 ── */
                 <div className="space-y-8 mt-3">
-                  {categorySections.map((section) => (
-                    <CategorySection key={section.key} cat={section} />
-                  ))}
+                  {categorySections.map((section) => {
+                    const catInfo = CATEGORIES.find((c) => c.key === section.key);
+                    const catColor = catInfo?.color ?? "#636e72";
+                    return (
+                      <CategorySection key={section.key} cat={section} color={catColor} />
+                    );
+                  })}
                 </div>
               )}
             </>
@@ -427,26 +431,41 @@ function PlatformItem({ item, meta }: { item: HotItem; meta: { color: string; na
    CategorySection
    ════════════════════════════════════════════════ */
 
-function CategorySection({ cat }: {
+function CategorySection({ cat, color }: {
   cat: { key: string; label: string; emoji: string; items: TaggedItem[] };
+  color: string;
 }) {
   return (
-    <section className="animate-card-in">
-      <div className="flex items-center gap-2.5 mb-3 px-1">
+    <section className="animate-card-in card-glass rounded-2xl overflow-hidden"
+      style={{
+        boxShadow: [
+          "0 2px 4px rgba(0,0,0,0.5)",
+          "0 4px 16px rgba(0,0,0,0.4)",
+          `inset 0 1px 0 ${color}10`,
+        ].join(", "),
+      }}>
+      {/* 顶部装饰线 */}
+      <div className="absolute top-0 left-5 right-5 h-px opacity-30"
+        style={{ background: `linear-gradient(90deg, transparent, ${color}50 20%, ${color}70 50%, ${color}50 80%, transparent)` }} />
+
+      <div className="relative px-4 pt-3.5 pb-2 flex items-center gap-2.5">
         <span className="text-lg">{cat.emoji}</span>
         <h2 className="text-sm font-semibold tracking-[0.12em] uppercase"
-          style={{ color: "var(--color-text-secondary)" }}>
+          style={{ color: "var(--color-text-primary)", textShadow: `0 0 20px ${color}20` }}>
           {cat.label}
         </h2>
         <span className="text-[11px] font-mono" style={{ color: "var(--color-text-muted)" }}>
           {cat.items.length} 条
         </span>
-        <div className="flex-1 h-px ml-3" style={{ background: "linear-gradient(90deg, rgba(255,255,255,0.06), transparent)" }} />
+        <div className="flex-1 h-px ml-3" style={{ background: `linear-gradient(90deg, ${color}15, transparent)` }} />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0.5">
-        {cat.items.map((item, i) => (
-          <CategoryFeedItem key={`${item.platformId}-${item.rank}-${i}`} item={item} />
-        ))}
+
+      <div className="px-3 pb-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0.5">
+          {cat.items.map((item, i) => (
+            <CategoryFeedItem key={`${item.platformId}-${item.rank}-${i}`} item={item} />
+          ))}
+        </div>
       </div>
     </section>
   );

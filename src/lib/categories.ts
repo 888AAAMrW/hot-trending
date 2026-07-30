@@ -300,26 +300,34 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   其他: [],
 };
 
-/** 带 emoji 的分类展示信息 */
-export const CATEGORIES: { key: string; label: string; emoji: string }[] = [
-  { key: "全部", label: "全部", emoji: "🌐" },
-  { key: "财经", label: "财经", emoji: "💰" },
-  { key: "科技", label: "科技", emoji: "🚀" },
-  { key: "教育", label: "教育", emoji: "📚" },
-  { key: "游戏", label: "游戏", emoji: "🎮" },
-  { key: "影视", label: "影视", emoji: "🎬" },
-  { key: "音乐", label: "音乐", emoji: "🎵" },
-  { key: "娱乐", label: "娱乐", emoji: "😂" },
-  { key: "美食", label: "美食", emoji: "🍜" },
-  { key: "时尚", label: "时尚", emoji: "👗" },
-  { key: "萌宠", label: "萌宠", emoji: "🐱" },
-  { key: "体育", label: "体育", emoji: "⚽" },
-  { key: "汽车", label: "汽车", emoji: "🚗" },
-  { key: "健康", label: "健康", emoji: "🏥" },
-  { key: "国际", label: "国际", emoji: "🌍" },
-  { key: "社会", label: "社会", emoji: "🏛" },
-  { key: "科普", label: "科普", emoji: "🔬" },
-  { key: "其他", label: "其他", emoji: "📋" },
+/** 分类展示信息（emoji + 专属色） */
+export interface CategoryInfo {
+  key: string;
+  label: string;
+  emoji: string;
+  color: string;
+}
+
+/** 带颜色标识的分类列表 */
+export const CATEGORIES: CategoryInfo[] = [
+  { key: "全部", label: "全部", emoji: "🌐", color: "#8899aa" },
+  { key: "财经", label: "财经", emoji: "💰", color: "#F5A623" },
+  { key: "科技", label: "科技", emoji: "🚀", color: "#4A90D9" },
+  { key: "教育", label: "教育", emoji: "📚", color: "#5B8DEF" },
+  { key: "游戏", label: "游戏", emoji: "🎮", color: "#9B59B6" },
+  { key: "影视", label: "影视", emoji: "🎬", color: "#E74C3C" },
+  { key: "音乐", label: "音乐", emoji: "🎵", color: "#1DB954" },
+  { key: "娱乐", label: "娱乐", emoji: "😂", color: "#FF6B9D" },
+  { key: "美食", label: "美食", emoji: "🍜", color: "#F39C12" },
+  { key: "时尚", label: "时尚", emoji: "👗", color: "#E91E8C" },
+  { key: "萌宠", label: "萌宠", emoji: "🐱", color: "#FF8C42" },
+  { key: "体育", label: "体育", emoji: "⚽", color: "#27AE60" },
+  { key: "汽车", label: "汽车", emoji: "🚗", color: "#C0392B" },
+  { key: "健康", label: "健康", emoji: "🏥", color: "#2ECC71" },
+  { key: "国际", label: "国际", emoji: "🌍", color: "#2980B9" },
+  { key: "社会", label: "社会", emoji: "🏛", color: "#7F8C8D" },
+  { key: "科普", label: "科普", emoji: "🔬", color: "#00B4D8" },
+  { key: "其他", label: "其他", emoji: "📋", color: "#636e72" },
 ];
 
 /** 分类缓存 */
