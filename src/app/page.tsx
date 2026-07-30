@@ -148,7 +148,6 @@ export default function Home() {
             {category === "全部" && (
               <div className="max-w-6xl mx-auto px-4 pb-2 flex items-center gap-1.5 flex-wrap"
                 style={{ scrollbarWidth: "none" }}>
-                <span className="text-[10px] text-gray-600 mr-1 flex-shrink-0">平台:</span>
                 {Object.values(PLATFORM_META).map((m) => {
                   const on = showAllPlatforms || platformFilter.has(m.id);
                   return (
