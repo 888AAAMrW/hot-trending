@@ -6,6 +6,7 @@ import Starfield from "@/components/Starfield";
 import type { CardAnchor } from "@/components/Starfield";
 import Header from "@/components/Header";
 import CategoryBar from "@/components/CategoryBar";
+import SearchBar from "@/components/SearchBar";
 import { CATEGORIES } from "@/lib/categories";
 import { PLATFORM_META } from "@/lib/types";
 import type { TrendsResponse, HotItem, PlatformId, PlatformData } from "@/lib/types";
@@ -143,6 +144,11 @@ export default function Home() {
               categoryCounts={categoryCounts}
               onSelect={setCategory}
             />
+
+            {/* 搜索栏 */}
+            <div className="max-w-6xl mx-auto px-4 pb-1.5">
+              <SearchBar items={allTagged} />
+            </div>
 
             {/* 平台开关（仅"全部"视图） */}
             {category === "全部" && (
