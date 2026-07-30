@@ -169,3 +169,11 @@ body {
 .animate-nebula-drift {
   animation: nebula-drift 12s ease-in-out infinite;
 }
+
+/* 搜索高亮 */
+.search-highlight {
+  background: rgba(255, 200, 50, 0.25);
+  color: #ffe484;
+  border-radius: 2px;
+  padding: 0 1px;
+}

@@ -20,10 +20,17 @@ export default function SearchBar({ items }: Props) {
 
   const results = useMemo(() => {
     if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return items
-      .filter((item) => item.title.toLowerCase().includes(q))
-      .slice(0, 20);
+    const q = query.trim().toLowerCase();
+    const scored: { item: SearchableItem; score: number }[] = [];
+
+    for (const item of items) {
+      const s = matchScore(item.title, q);
+      if (s > 0) scored.push({ item, score: s });
+    }
+
+    // 按分数降序，高分在前
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, 20).map((s) => s.item);
   }, [items, query]);
 
   const show = focused && query.trim().length > 0;
@@ -174,18 +181,82 @@ export default function SearchBar({ items }: Props) {
   );
 }
 
+/**
+ * 模糊匹配得分：
+ * - 精确子串匹配 → 1000 分（最高）
+ * - 字符按序出现（子序列匹配，如 "ai" 匹配 "人工智能AI"） → 基于紧凑度评分
+ * - 不匹配 → 0
+ */
+function matchScore(title: string, query: string): number {
+  const t = title.toLowerCase();
+  const q = query.toLowerCase();
+
+  // 精确子串匹配 → 最高分（越靠前分越高）
+  const exact = t.indexOf(q);
+  if (exact !== -1) {
+    return 1000 - exact;
+  }
+
+  // 子序列匹配（每个 query 字符在 title 中按序出现）
+  let ti = 0;
+  let first = -1;
+  let last = -1;
+  for (let qi = 0; qi < q.length; qi++) {
+    const ch = q[qi];
+    // 跳过空格
+    if (ch === " ") { first = first === -1 ? ti : first; continue; }
+    const found = t.indexOf(ch, ti);
+    if (found === -1) return 0; // 有字符找不到 → 不匹配
+    if (first === -1) first = found;
+    last = found;
+    ti = found + 1;
+  }
+
+  // 匹配越紧凑（字符间距越小），分数越高
+  const span = last - first + 1;
+  const density = q.length / span;
+  return Math.round(density * 500);
+}
+
 /** 在标题中高亮匹配的文字 */
 function highlightMatch(title: string, query: string): React.ReactNode {
-  const idx = title.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return title;
-  const before = title.slice(0, idx);
-  const match = title.slice(idx, idx + query.length);
-  const after = title.slice(idx + query.length);
-  return (
-    <>
-      {before}
-      <mark style={{ background: "rgba(255,200,50,0.25)", color: "#ffe484", borderRadius: 2, padding: "0 1px" }}>{match}</mark>
-      {after}
-    </>
-  );
+  const t = title.toLowerCase();
+  const q = query.toLowerCase();
+
+  // 先尝试精确匹配高亮
+  const exact = t.indexOf(q);
+  if (exact !== -1) {
+    const before = title.slice(0, exact);
+    const match = title.slice(exact, exact + q.length);
+    const after = title.slice(exact + q.length);
+    return (
+      <>
+        {before}
+        <mark className="search-highlight">{match}</mark>
+        {after}
+      </>
+    );
+  }
+
+  // 子序列高亮：逐个字符高亮
+  const result: React.ReactNode[] = [];
+  let ti = 0;
+  let keyIdx = 0;
+  for (let qi = 0; qi < q.length; qi++) {
+    const ch = q[qi];
+    if (ch === " ") continue;
+    const found = t.indexOf(ch, ti);
+    if (found === -1) break;
+    if (found > ti) {
+      result.push(<span key={keyIdx++}>{title.slice(ti, found)}</span>);
+    }
+    result.push(
+      <mark key={keyIdx++} className="search-highlight">{title.slice(found, found + 1)}</mark>
+    );
+    ti = found + 1;
+  }
+  if (ti < title.length) {
+    result.push(<span key={keyIdx++}>{title.slice(ti)}</span>);
+  }
+  return <>{result}</>;
 }
