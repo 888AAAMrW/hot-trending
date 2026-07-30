@@ -1,10 +1,8 @@
 import { fetchAllPlatforms } from "@/lib/fetcher";
 import type { PlatformData } from "@/lib/types";
 import { checkRateLimit, getClientKey } from "@/lib/rate-limit";
+import { CATEGORY_KEYS } from "@/lib/categories";
 
-const CATEGORIES = ["金融", "科技", "教育", "娱乐", "体育", "社会", "国际", "其他"];
-
-/** 单标题最大字符数，防止 prompt 注入时填充超大输入 */
 const MAX_TITLE_LENGTH = 120;
 
 /** 过滤标题中的控制字符和 prompt 注入标记 */
@@ -26,16 +24,25 @@ async function classifyWithAI(titles: string[]): Promise<string[]> {
     return titles.map(() => "其他");
   }
 
-  const prompt = `将以下热搜标题分类到最匹配的领域。只能从以下类别中选择：${CATEGORIES.join("、")}。
+  const prompt = `将以下热搜标题分类到最匹配的领域。只能从以下类别中选择：${CATEGORY_KEYS.join("、")}、其他。
 
 规则：
-- 金融：涉及股票、基金、经济、货币政策、房价、企业财报等
-- 科技：涉及AI、芯片、互联网公司、电子产品、航天、新能源等
-- 教育：涉及高考、大学、考研、学校、留学、考试等
-- 娱乐：涉及明星、电影、综艺、游戏、直播、网红八卦等
-- 体育：涉及足球、篮球、NBA、赛事、运动员等
-- 社会：涉及政策法规、公共安全、民生、环保、医疗、交通事故等
-- 国际：涉及外国政治、国际关系、外交、战争等
+- 财经：股票、基金、经济、货币政策、房价、企业财报、商业等
+- 科技：AI、芯片、互联网公司、数码产品、航天、新能源等
+- 教育：高考、大学、考研、学校、留学、考试、公务员等
+- 游戏：电子游戏、电竞、游戏产业、动漫二次元、漫展等
+- 影视：电影、电视剧、综艺节目、纪录片、短剧等
+- 音乐：歌曲、演唱会、歌手、乐队、音乐节等
+- 娱乐：明星八卦、网红、搞笑段子、粉丝追星等（注意：游戏/影视/音乐有独立分类）
+- 美食：烹饪、餐厅、小吃、饮食文化、食品安全等
+- 时尚：穿搭、美妆、潮流、奢侈品、减肥塑形等
+- 萌宠：猫狗宠物、野生动物、动物趣闻等
+- 体育：足球篮球等赛事、运动员、健身、马拉松等
+- 汽车：汽车、新能源车、驾驶、驾照考试、油价等
+- 健康：医疗、疾病、养生、心理健康、医美整容、疫情等
+- 国际：外国政治、国际关系、外交、战争、移民等
+- 社会：政策法规、公共安全、民生、交通、环保、天气灾害等
+- 科普：科学、历史、人文、冷知识、哲学心理学等
 - 其他：无法归入以上任何类别的内容
 
 请严格按顺序输出每条的类别，每行一个，不要编号、不要解释，只输出类别名。
@@ -73,9 +80,10 @@ ${titles.map((t, i) => `${i + 1}. ${t}`).join("\n")}`;
     const lines = text.trim().split("\n").map((l) => l.trim()).filter(Boolean);
 
     // 匹配到有效的类别
+    const validCats = [...CATEGORY_KEYS, "其他"];
     return titles.map((_, i) => {
       const raw = lines[i] ?? "其他";
-      for (const cat of CATEGORIES) {
+      for (const cat of validCats) {
         if (raw.includes(cat)) return cat;
       }
       return "其他";
