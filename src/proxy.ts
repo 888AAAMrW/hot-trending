@@ -25,6 +25,23 @@ export default function proxy(req: NextRequest) {
     } else {
       res = NextResponse.next();
     }
+  }
+  // 博客子域名 → rewrite 到 /blog
+  else if (host === "blog.starrynova.cc") {
+    const url = req.nextUrl.clone();
+    if (url.pathname === "/") {
+      url.pathname = "/blog";
+    } else if (url.pathname === "/sitemap.xml") {
+      url.pathname = "/blog/sitemap.xml";
+    } else if (url.pathname === "/robots.txt") {
+      url.pathname = "/blog/robots.txt";
+    } else if (url.pathname === "/feed.xml") {
+      url.pathname = "/blog/feed.xml";
+    } else if (!url.pathname.startsWith("/blog")) {
+      // 避免双重前缀：/blog/xxx 已经能命中路由，不需要再加
+      url.pathname = "/blog" + url.pathname;
+    }
+    res = NextResponse.rewrite(url);
   } else {
     res = NextResponse.next();
   }

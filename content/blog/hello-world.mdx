@@ -1,0 +1,61 @@
+---
+title: "你好，深空"
+date: 2026-08-01
+description: "Starry Nova 博客的第一篇文章，聊聊这个项目的缘起。"
+tags: ["随笔", "技术"]
+draft: false
+---
+
+## 欢迎来到深空博客
+
+这是 **Starry Nova** 的个人博客。在这里我会记录技术笔记和生活思考。
+
+### 技术栈
+
+这个博客基于以下技术构建：
+
+- **Next.js 16** — React 全栈框架
+- **Velite** — MDX 内容编译
+- **Tailwind CSS 4** — 原子化 CSS
+- **Shiki** — 代码语法高亮
+
+### 一段代码示例
+
+```ts
+// Velite 的 schema 定义
+export default defineConfig({
+  collections: {
+    posts: {
+      pattern: "blog/**/*.mdx",
+      schema: s.object({
+        title: s.string(),
+        date: s.isodate(),
+        content: s.markdown(),
+      }),
+    },
+  },
+});
+```
+
+### 数学公式
+
+行内公式：$E = mc^2$
+
+块级公式：
+
+$$
+\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}
+$$
+
+### 未来计划
+
+- [x] 搭建博客框架
+- [ ] 配置评论系统
+- [ ] 添加 RSS 订阅
+- [ ] 写更多文章
+
+> "我们都是由星尘组成的。" —— 卡尔·萨根
+
+---
+
+感谢阅读，敬请期待更多内容。🪐

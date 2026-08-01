@@ -12,6 +12,13 @@ const PROJECTS = [
     icon: "🔥",
     color: "#E6162D",
   },
+  {
+    name: "深空博客",
+    desc: "技术笔记 · 思考碎片 · 星际日志",
+    url: "https://blog.starrynova.cc",
+    icon: "📝",
+    color: "#7C3AED",
+  },
 ];
 
 export default function NavPage() {
@@ -120,7 +127,7 @@ export default function NavPage() {
           </div>
 
           <footer className="text-center text-xs text-gray-700">
-            更多项目即将上线 · 星际航行中 🚀
+            {PROJECTS.length} 个项目 · 星际航行中 🚀
           </footer>
         </div>
       </div>
