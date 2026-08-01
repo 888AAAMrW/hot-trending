@@ -12,10 +12,31 @@ export const metadata: Metadata = {
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen">
-      {/* 星空背景占位 — 复用全局 bg-surface-base */}
+      {/* 桌面端：视频背景 */}
+      <div className="fixed inset-0 z-0 hidden md:block">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+        >
+          <source src="/bg-compressed.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      {/* 移动端：竖图背景 */}
+      <div className="fixed inset-0 z-0 block md:hidden">
+        <img
+          src="/微信图片_20260801202423_271_109.jpg"
+          alt=""
+          className="w-full h-full object-cover"
+        />
+      </div>
+
       <div className="relative z-10">
         <BlogHeader />
-        <main>{children}</main>
+        {children}
       </div>
     </div>
   );

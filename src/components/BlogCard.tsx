@@ -16,7 +16,7 @@ export default function BlogCard({ post }: BlogCardProps) {
   return (
     <Link
       href={`/${post.slug}`}
-      className="card-glass-interactive rounded-2xl p-6 block group/card"
+      className="card-blog rounded-2xl p-6 block group/card"
       style={{
         boxShadow: [
           "0 0 0 1px rgba(255,255,255,0.04)",
