@@ -29,19 +29,28 @@ export default function proxy(req: NextRequest) {
   // 博客子域名 → rewrite 到 /blog
   else if (host === "blog.starrynova.cc") {
     const url = req.nextUrl.clone();
-    if (url.pathname === "/") {
+    // 静态资源不重写，直接从 public/ 提供
+    if (/\.(mp4|jpg|jpeg|png|gif|svg|ico|webp|avif|woff2?|css|js)$/.test(url.pathname)) {
+      res = NextResponse.next();
+    } else if (url.pathname === "/") {
       url.pathname = "/blog";
+      res = NextResponse.rewrite(url);
     } else if (url.pathname === "/sitemap.xml") {
       url.pathname = "/blog/sitemap.xml";
+      res = NextResponse.rewrite(url);
     } else if (url.pathname === "/robots.txt") {
       url.pathname = "/blog/robots.txt";
+      res = NextResponse.rewrite(url);
     } else if (url.pathname === "/feed.xml") {
       url.pathname = "/blog/feed.xml";
+      res = NextResponse.rewrite(url);
     } else if (!url.pathname.startsWith("/blog")) {
       // 避免双重前缀：/blog/xxx 已经能命中路由，不需要再加
       url.pathname = "/blog" + url.pathname;
+      res = NextResponse.rewrite(url);
+    } else {
+      res = NextResponse.next();
     }
-    res = NextResponse.rewrite(url);
   } else {
     res = NextResponse.next();
   }
