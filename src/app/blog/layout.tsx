@@ -28,7 +28,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
       {/* 移动端：竖图背景 */}
       <div className="fixed inset-0 z-0 block md:hidden">
         <img
-          src="/微信图片_20260801202423_271_109.jpg"
+          src="/bg-mobile.jpg"
           alt=""
           className="w-full h-full object-cover"
         />
