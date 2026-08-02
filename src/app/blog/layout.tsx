@@ -13,7 +13,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="relative min-h-screen">
       {/* 桌面端：视频背景 */}
-      <div className="fixed inset-0 z-0 hidden md:block">
+      <div className="fixed inset-0 z-0 hidden md:block bg-gray-950">
         <video
           autoPlay
           loop
@@ -26,10 +26,11 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       {/* 移动端：竖图背景 */}
-      <div className="fixed inset-0 z-0 block md:hidden">
+      <div className="fixed inset-0 z-0 block md:hidden bg-gray-950">
         <img
           src="/bg-mobile.jpg"
           alt=""
+          fetchPriority="high"
           className="w-full h-full object-cover"
         />
       </div>
