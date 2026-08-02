@@ -35,7 +35,8 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
         <img
           src="/assets/images/background-desktop.png"
           alt=""
-          className="w-full h-full object-cover"
+          fetchPriority="high"
+          className="w-full h-full object-cover animate-bg-fade-in"
         />
       </div>
 
@@ -54,25 +55,41 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
 
       {/* ========== 顶部导航毛玻璃条 ========== */}
       <header className="fixed top-0 left-0 right-0 z-30 px-8 py-4 flex items-center justify-between
-                        bg-white/[0.02] backdrop-blur-md">
+                        border-b border-white/[0.06]"
+             style={{
+               background: "linear-gradient(to right, rgba(20,25,50,0.02), rgba(20,25,50,0.12))",
+               backdropFilter: "blur(6px)",
+               WebkitBackdropFilter: "blur(6px)",
+             }}>
         <Link
           href="https://starrynova.cc"
-          className="group flex items-center gap-2.5"
+          className="group flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-full
+                     text-amber-100/85 hover:text-amber-50/95 tracking-[0.1em] transition-all duration-200"
+          style={{
+            fontFamily: "'Orbitron', monospace",
+            background: "rgba(251,191,36,0.18)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            border: "1px solid rgba(251,191,36,0.3)",
+            boxShadow: "0 0 14px rgba(251,191,36,0.12)",
+          }}
         >
-          <Diamond size={6} />
-          <span className="text-[11px] text-white/30 group-hover:text-white/50 transition-colors tracking-[0.18em] uppercase">
-            Starry Nova
-          </span>
+          <span className="text-amber-100/70 group-hover:text-amber-50/90 transition-colors">←</span>
+          Starry Nova
         </Link>
         <BlogNav />
       </header>
 
       {/* ========== 左侧浮层组 ========== */}
-      <aside className="fixed top-36 left-10 z-20 hidden md:flex flex-col items-center gap-5 w-56">
-        {/* 头像 — 替换 /assets/images/avatar.png 即可 */}
-        <div className="w-36 h-36 rounded-full border-2 border-white/[0.08] overflow-hidden
-                        shadow-[0_0_24px_rgba(0,0,0,0.3)] shrink-0
-                        bg-white/[0.03]">
+      {/* ========== 左侧浮层组 ========== */}
+      <div className="fixed top-36 z-20 hidden md:flex flex-col items-center gap-5"
+           style={{ left: "60px" }}>
+        {/* 头像 */}
+        <div className="w-44 h-44 rounded-full overflow-hidden shrink-0 bg-white/[0.03]"
+             style={{
+               border: "2px solid rgba(255,150,180,0.3)",
+               boxShadow: "0 0 24px rgba(0,0,0,0.3), 0 0 18px rgba(255,150,180,0.15)",
+             }}>
           <img
             src="/assets/images/avatar.png"
             alt="avatar"
@@ -81,16 +98,26 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
           />
         </div>
 
-        {/* 标签卡 — 糯米纸质感 */}
-        <div className="rounded-2xl p-4 w-full"
+        {/* 标签卡 */}
+        <div className="rounded-2xl p-4 relative"
              style={{
+               width: "256px",
                background: "rgba(255,255,255,0.07)",
                backdropFilter: "blur(4px)",
                WebkitBackdropFilter: "blur(4px)",
-               border: "1px solid rgba(255,255,255,0.07)",
-               boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
+               border: "1px solid rgba(255,150,180,0.18)",
+               boxShadow: "0 4px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,150,180,0.06)",
              }}>
-          {/* 头部：成分表标题 */}
+          {/* 四角装饰线 */}
+          <span className="absolute top-3 left-3 w-3 h-px bg-white/[0.15]" />
+          <span className="absolute top-3 left-3 w-px h-3 bg-white/[0.15]" />
+          <span className="absolute top-3 right-3 w-3 h-px bg-white/[0.15]" />
+          <span className="absolute top-3 right-3 w-px h-3 bg-white/[0.15]" />
+          <span className="absolute bottom-3 left-3 w-3 h-px bg-white/[0.15]" />
+          <span className="absolute bottom-3 left-3 w-px h-3 bg-white/[0.15]" />
+          <span className="absolute bottom-3 right-3 w-3 h-px bg-white/[0.15]" />
+          <span className="absolute bottom-3 right-3 w-px h-3 bg-white/[0.15]" />
+
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs text-white/60 tracking-[0.15em]">
               🍬 成分表
@@ -98,19 +125,19 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
             <span className="text-[10px] text-white/30">per 100g</span>
             <div className="h-px flex-1 bg-gradient-to-r from-white/[0.06] via-transparent to-transparent" />
           </div>
-          {/* 标签内容区 */}
           <ProfileTags />
         </div>
-      </aside>
 
-      {/* ========== 右上角：时钟光环 ========== */}
-      <div className="fixed top-20 right-8 z-20 hidden md:block">
-        <TimeOrb />
+        {/* 色轮 */}
+        <div className="mt-10">
+          <ColorWheel />
+        </div>
       </div>
 
-      {/* ========== 左下角：彩色轮盘 ========== */}
-      <div className="fixed bottom-8 left-10 z-20 hidden md:block">
-        <ColorWheel />
+      {/* ========== 右上区：时钟 ========== */}
+      <div className="fixed z-20 hidden md:block"
+           style={{ top: "96px", right: "2%" }}>
+        <TimeOrb />
       </div>
 
       {/* ========== 内容区：居中 ========== */}
