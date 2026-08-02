@@ -183,8 +183,7 @@ export default function FloatingActions() {
     return (
       <div className="flex items-center justify-center">
         <div
-          className="rounded-3xl p-10"
-          className="rounded-[2rem] anime-glow"
+          className="rounded-[2rem] p-10 anime-glow"
           style={{
             width: "80vw",
             maxWidth: "900px",
