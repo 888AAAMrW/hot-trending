@@ -3,6 +3,37 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
+/* 四张卡的细线图标（线宽与 HUD 环一致 ~1px） */
+const CARD_ICONS: Record<string, React.ReactNode> = {
+  posts: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+  ),
+  guestbook: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3c-1.7 0-3.2.7-4.3 1.8-1.1 1-1.7 2.3-1.7 3.7 0 2.8 2.2 5.5 6 8.5 3.8-3 6-5.7 6-8.5 0-1.4-.6-2.7-1.7-3.7C15.2 3.7 13.7 3 12 3z"/>
+      <path d="M12 7v3l2 1.5" opacity="0.5"/>
+    </svg>
+  ),
+  about: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  ),
+  projects: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 3H5a2 2 0 0 0-2 2v4h6V3z"/>
+      <path d="M15 3h4a2 2 0 0 1 2 2v4h-6V3z"/>
+      <path d="M9 13H3v6a2 2 0 0 0 2 2h4v-8z"/>
+      <path d="M21 13h-6v8h4a2 2 0 0 0 2-2v-6z"/>
+    </svg>
+  ),
+};
+
 const actions = [
   { key: "posts", label: "文章", desc: "技术笔记" },
   { key: "guestbook", label: "留言", desc: "留言板" },
@@ -41,8 +72,23 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
+/* ====== 胶囊渐变按钮预设 ====== */
+const BTN_GLASS_STYLE = (ops: number[]): React.CSSProperties => ({
+  background: `linear-gradient(150deg, rgba(160,130,240,${ops[0]}), rgba(200,100,180,${ops[1]}), rgba(120,80,220,${ops[2]}), rgba(255,140,180,${ops[3]}))`,
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
+  border: "1px solid rgba(200,170,240,0.25)",
+  boxShadow: [
+    "inset 0 1px 0 rgba(255,255,255,0.30)",
+    "inset 0 2px 6px rgba(255,255,255,0.06)",
+    "inset 0 -2px 3px rgba(0,0,0,0.10)",
+    "0 0 14px rgba(160,130,220,0.10)",
+    "0 0 0 1px rgba(200,170,240,0.08)",
+  ].join(", "),
+});
+
 /* ====== 留言板面板 ====== */
-function GuestbookPanel() {
+export function GuestbookPanel() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [name, setName] = useState("");
   const [text, setText] = useState("");
@@ -55,8 +101,11 @@ function GuestbookPanel() {
   const [isOwner, setIsOwner] = useState(false);
   const [replyId, setReplyId] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [replying, setReplying] = useState(false);
   const [defaultName, setDefaultName] = useState("");
   const [bottleMsg, setBottleMsg] = useState<Message | null>(null);
+  const [showWrite, setShowWrite] = useState(false);
+  const [myKeys, setMyKeys] = useState<Set<number>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 初始化
@@ -69,11 +118,9 @@ function GuestbookPanel() {
     const hasCookie = document.cookie.split("; ").some(r => r.startsWith("gb-owner=1"));
     if (hasCookie || localStorage.getItem("gb-is-owner") === "1") {
       setIsOwner(true);
-      // 双写：Cookie + localStorage 互相备份
       document.cookie = "gb-owner=1; max-age=31536000; path=/; SameSite=Lax";
       localStorage.setItem("gb-is-owner", "1");
     }
-    // 新设备激活：访问 ?owner （一次性）
     if (window.location.search.includes("owner")) {
       document.cookie = "gb-owner=1; max-age=31536000; path=/; SameSite=Lax";
       localStorage.setItem("gb-is-owner", "1");
@@ -81,7 +128,11 @@ function GuestbookPanel() {
       window.history.replaceState({}, "", window.location.pathname);
     }
 
-    // 获取 IP 定位
+    // 加载已保存的作者密钥
+    try {
+      const saved = JSON.parse(localStorage.getItem("gb-my-keys") || "{}");
+      setMyKeys(new Set(Object.keys(saved).map(Number)));
+    } catch {}
     fetch("/api/geo").then(r => r.json()).then(d => {
       if (d.location) setDefaultName(`来自${d.location}的路人`);
     }).catch(() => {});
@@ -94,7 +145,6 @@ function GuestbookPanel() {
     return () => window.removeEventListener("click", close);
   }, [menuMsgId]);
 
-  // 拉取留言
   const fetchMessages = async () => {
     try {
       const res = await fetch("/api/guestbook");
@@ -107,11 +157,9 @@ function GuestbookPanel() {
 
   useEffect(() => { fetchMessages(); }, []);
 
-  // 发留言
   const submit = async () => {
     if (!text.trim() || sending) return;
     setSending(true); setError("");
-
     try {
       const res = await fetch("/api/guestbook", {
         method: "POST",
@@ -121,21 +169,26 @@ function GuestbookPanel() {
           text: text.trim(),
           avatar: isOwner ? undefined : (avatarPreview || undefined),
           isOwner,
-          honeypot: "",  // 蜜罐：机器人会自动填写
+          honeypot: "",
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "发送失败");
-
       setMessages(prev => [data.message, ...prev]);
-      setText(""); setName("");
+      // 保存 authorKey，用于后续自删
+      if (data.authorKey) {
+        const keys = JSON.parse(localStorage.getItem("gb-my-keys") || "{}");
+        keys[data.message.id] = data.authorKey;
+        localStorage.setItem("gb-my-keys", JSON.stringify(keys));
+        setMyKeys(prev => new Set([...prev, data.message.id]));
+      }
+      setText(""); setName(""); setShowWrite(false);
       if (!isOwner) setAvatarPreview(null);
     } catch (e: any) {
       setError(e.message || "网络错误");
     } finally { setSending(false); }
   };
 
-  // 置顶
   const togglePin = async (id: number) => {
     try {
       const res = await fetch("/api/guestbook", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action: "pin", isOwner: true }) });
@@ -146,7 +199,6 @@ function GuestbookPanel() {
     } catch {}
   };
 
-  // 点赞
   const toggleLike = async (id: number) => {
     const wasLiked = likedIds.has(id);
     setLikedIds(prev => { const n = new Set(prev); wasLiked ? n.delete(id) : n.add(id); return n; });
@@ -160,9 +212,9 @@ function GuestbookPanel() {
     } catch {}
   };
 
-  // 回复
   const submitReply = async (msgId: number) => {
-    if (!replyText.trim()) return;
+    if (!replyText.trim() || replying) return;
+    setReplying(true);
     try {
       const res = await fetch("/api/guestbook", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: msgId, action: "reply", text: replyText.trim(), isOwner: true }) });
       if (res.ok) {
@@ -170,16 +222,25 @@ function GuestbookPanel() {
         setMessages(prev => prev.map(m => m.id === msgId ? data.message : m));
         setReplyId(null); setReplyText("");
       }
-    } catch {}
+    } catch {} finally { setReplying(false); }
   };
 
-  // 删除
   const deleteMsg = async (id: number) => {
     await fetch("/api/guestbook", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action: "delete", isOwner: true }) });
     setMessages(prev => prev.filter(m => m.id !== id));
   };
 
-  // 漂流瓶
+  const deleteSelf = async (id: number) => {
+    const keys = JSON.parse(localStorage.getItem("gb-my-keys") || "{}");
+    const authorKey = keys[id];
+    if (!authorKey) return;
+    await fetch("/api/guestbook", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, action: "delete-self", authorKey }) });
+    setMessages(prev => prev.filter(m => m.id !== id));
+    delete keys[id];
+    localStorage.setItem("gb-my-keys", JSON.stringify(keys));
+    setMyKeys(prev => { const n = new Set(prev); n.delete(id); return n; });
+  };
+
   const fetchBottle = async () => {
     try {
       const res = await fetch("/api/guestbook", { method: "PUT" });
@@ -190,7 +251,6 @@ function GuestbookPanel() {
     } catch {}
   };
 
-  // 头像上传
   const handleAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -214,16 +274,16 @@ function GuestbookPanel() {
     const isPinned = msg.pinned;
     return (
       <div key={msg.id}
-        className="relative rounded-[16px] px-4 py-3.5 transition-all duration-300 overflow-hidden
+        className="relative rounded-[13px] px-3.5 py-2.5 transition-all duration-300 overflow-hidden
                    hover:scale-[1.01] hover:-translate-y-0.5"
         style={{
           background: msg.isOwner
-            ? "linear-gradient(135deg, rgba(40,50,180,0.70), rgba(120,60,180,0.70), rgba(200,50,130,0.70))"
-            : "linear-gradient(135deg, rgba(255,180,210,0.10), rgba(190,160,240,0.12))",
-          backdropFilter: msg.isOwner ? "none" : "blur(16px)",
-          WebkitBackdropFilter: msg.isOwner ? "none" : "blur(16px)",
-          border: msg.isOwner ? "1px solid rgba(200,170,240,0.35)" : "1px solid rgba(255,255,255,0.15)",
-          boxShadow: msg.isOwner ? "0 0 20px rgba(100,50,200,0.20)" : "0 4px 20px rgba(0,0,0,0.08)",
+            ? "linear-gradient(135deg, rgba(40,50,180,0.72), rgba(120,60,180,0.72), rgba(200,50,130,0.72))"
+            : "linear-gradient(135deg, rgba(25,20,48,0.62), rgba(30,22,50,0.60))",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: msg.isOwner ? "1px solid rgba(200,170,240,0.35)" : "1px solid rgba(255,255,255,0.12)",
+          boxShadow: msg.isOwner ? "0 0 20px rgba(100,50,200,0.22)" : "0 4px 20px rgba(0,0,0,0.12)",
         }}
       >
         {/* 顶部装饰 */}
@@ -240,7 +300,18 @@ function GuestbookPanel() {
           )}
         </div>
 
-        {/* 菜单 */}
+        {/* 自删按钮（非站长的自己留言） */}
+        {!msg.isOwner && myKeys.has(msg.id) && (
+          <div className="absolute top-2 right-2 z-20">
+            <button onClick={(e) => { e.stopPropagation(); deleteSelf(msg.id); }}
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white/20 hover:text-red-300/70 hover:bg-red-400/10 transition-all text-xs"
+              title="删除我的留言">
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* 站长菜单 */}
         {isOwner && (
           <div className="absolute top-2 right-2 z-20">
             <button onClick={(e) => { e.stopPropagation(); setMenuMsgId(menuMsgId === msg.id ? null : msg.id); }}
@@ -288,15 +359,15 @@ function GuestbookPanel() {
           </div>
           <div className="flex-1 min-w-0">
             <span className="text-[12px] text-white/90 font-medium block truncate">{msg.name}</span>
-            <span className="text-[9px] text-white/40 block">发布于 {msg.time}</span>
           </div>
         </div>
 
         {/* 正文 */}
-        <p className="text-xs text-white/70 leading-relaxed mt-3 ml-12">{msg.text}</p>
+        <p className="text-[13px] text-white/80 leading-relaxed mt-2 ml-12"
+          style={{ textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>{msg.text}</p>
 
-        {/* 点赞 */}
-        <div className="flex items-center gap-1.5 mt-3 ml-12">
+        {/* 点赞 + 时间（右下角） */}
+        <div className="flex items-center justify-end gap-3 mt-2 ml-12">
           <button onClick={(e) => { e.stopPropagation(); toggleLike(msg.id); }}
             className="flex items-center gap-1.5 transition-all duration-200 hover:scale-110 active:scale-75">
             <span className="text-sm select-none"
@@ -304,12 +375,15 @@ function GuestbookPanel() {
               ❤️
             </span>
           </button>
-          {(msg.likes ?? 0) > 0 && <span className="text-[10px] text-white/30 tabular-nums font-medium">{msg.likes}</span>}
+          {(msg.likes ?? 0) > 0 && <span className="text-[10px] tabular-nums font-medium"
+            style={{ color: "rgba(255,255,255,0.60)", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>{msg.likes}</span>}
+          <span className="text-[9px]"
+            style={{ color: "rgba(255,255,255,0.55)", textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>{msg.time}</span>
         </div>
 
         {/* 博主回复线程 */}
         {msg.replies && msg.replies.length > 0 && (
-          <div className="mt-3 ml-12 space-y-2">
+          <div className="mt-2 ml-10 space-y-1.5">
             {msg.replies.map(r => (
               <div key={r.id} className="rounded-lg px-3 py-2"
                 style={{ background: "rgba(40,50,180,0.25)", border: "1px solid rgba(150,160,240,0.2)", borderLeft: "2px solid rgba(200,170,240,0.5)" }}>
@@ -326,14 +400,14 @@ function GuestbookPanel() {
 
         {/* 回复输入框 */}
         {isOwner && replyId === msg.id && (
-          <div className="mt-3 ml-12 flex gap-2">
+          <div className="mt-2 ml-10 flex gap-2">
             <input value={replyText} onChange={e => setReplyText(e.target.value)}
               placeholder="回复..." maxLength={300}
-              className="flex-1 rounded-lg px-3 py-1.5 text-[11px] text-white/80 outline-none"
+              className="flex-1 rounded-lg px-3 py-1.5 text-[11px] text-white/80 placeholder:text-white/30 outline-none"
               style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(200,170,240,0.2)" }} />
-            <button onClick={() => submitReply(msg.id)}
-              className="text-[10px] px-3 py-1.5 rounded-lg text-white/80 bg-pink-400/20 hover:bg-pink-400/30 transition-colors">
-              回复
+            <button onClick={() => submitReply(msg.id)} disabled={replying}
+              className="text-[10px] px-3 py-1.5 rounded-lg text-white/80 bg-pink-400/20 hover:bg-pink-400/30 transition-colors disabled:opacity-30">
+              {replying ? "..." : "回复"}
             </button>
             <button onClick={() => setReplyId(null)}
               className="text-[10px] px-2 py-1.5 rounded-lg text-white/30 hover:text-white/50">✕</button>
@@ -343,126 +417,115 @@ function GuestbookPanel() {
     );
   };
 
+  /* ====== 星点装饰（空状态） ====== */
+  const StarDust = () => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[18px]">
+      {Array.from({ length: 20 }).map((_, i) => {
+        const cx = 10 + Math.random() * 80;
+        const cy = 10 + Math.random() * 80;
+        const r = 0.3 + Math.random() * 1.2;
+        const delay = Math.random() * 3;
+        return (
+          <div key={i}
+            className="absolute rounded-full"
+            style={{
+              left: `${cx}%`, top: `${cy}%`,
+              width: `${r * 2}px`, height: `${r * 2}px`,
+              background: i % 3 === 0 ? "rgba(255,180,220,0.5)" : i % 3 === 1 ? "rgba(180,160,240,0.45)" : "rgba(150,210,240,0.4)",
+              boxShadow: `0 0 ${r * 3}px currentColor`,
+              animation: `star-twinkle ${2 + delay}s ease-in-out infinite`,
+              animationDelay: `${delay}s`,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+
   /* ====== 主渲染 ====== */
   return (
-    <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-full items-center justify-between" style={{ minHeight: "50vh" }}>
+    <div className="w-full max-w-3xl mx-auto rounded-[18px] p-5 md:p-6 flex flex-col relative"
+      style={{
+        background: "rgba(20,18,45,0.45)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        border: "1px solid rgba(220,200,245,0.45)",
+        boxShadow: "0 0 30px rgba(160,140,220,0.06)",
+        minHeight: messages.length === 0 && !loading ? "300px" : "auto",
+        maxHeight: "700px",
+      }}>
 
-      {/* ====== 左侧：发表留言 ====== */}
-      <div className="md:w-[300px] w-full rounded-[18px] p-5 md:p-6 flex flex-col h-fit max-h-full"
-        style={{ background: "rgba(20,15,40,0.08)", border: "1px solid rgba(220,200,245,0.60)" }}>
-
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-sm text-white/55 tracking-[0.12em]">✏️ 写下留言</h4>
-          {/* 漂流瓶 */}
-          <button onClick={fetchBottle} title="捞漂流瓶"
-            className="text-[10px] px-2 py-1 rounded-full bg-white/[0.04] text-white/25 hover:text-white/50 hover:bg-white/[0.08] transition-all">
-            🍾 捞瓶
-          </button>
-        </div>
-
-        {/* 漂流瓶展示 */}
-        {bottleMsg && (
-          <div className="mb-4 rounded-xl p-3 relative"
-            style={{ background: "rgba(100,140,220,0.12)", border: "1px solid rgba(150,180,240,0.2)" }}>
-            <button onClick={() => setBottleMsg(null)} className="absolute top-1 right-2 text-white/20 hover:text-white/50 text-xs">✕</button>
-            <p className="text-[9px] text-white/30 mb-1">🍾 你捞到了一条留言：</p>
-            <p className="text-[11px] text-white/60 leading-relaxed line-clamp-4">{bottleMsg.text}</p>
-            <p className="text-[9px] text-white/25 mt-1">— {bottleMsg.name} · {bottleMsg.time}</p>
-          </div>
-        )}
-
-        {isOwner ? (
-          /* 站长模式：极简 */
-          <div className="flex-1 flex flex-col">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full shrink-0 ring-2 ring-amber-400/30 overflow-hidden"
-                style={{ boxShadow: "0 0 12px rgba(251,191,36,0.2)" }}>
-                <img src="/assets/images/avatar.png" alt="" className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <p className="text-sm text-white/85 font-medium">站长</p>
-                <p className="text-[10px] text-amber-300/50">博主身份</p>
-              </div>
-            </div>
-            <textarea value={text} onChange={e => setText(e.target.value)}
-              placeholder="写下你想说的话..." rows={4} maxLength={500}
-              className="w-full flex-1 rounded-[14px] px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 outline-none resize-none mb-3"
-              style={{ background: "rgba(255,255,255,0.88)", border: "1px solid rgba(255,255,255,0.15)", minHeight: "100px" }} />
-            {error && <p className="text-[11px] text-amber-300/60 mb-2">{error}</p>}
-            <button onClick={submit} disabled={!text.trim() || sending}
-              className="w-full py-2.5 rounded-[14px] text-xs text-white/95 font-medium tracking-wider transition-all disabled:opacity-30 hover:brightness-110"
-              style={{
-                background: sending ? "linear-gradient(135deg, rgba(40,50,180,0.40), rgba(200,50,130,0.40))"
-                  : "linear-gradient(135deg, rgba(40,50,180,0.78), rgba(120,60,180,0.78), rgba(200,50,130,0.78))",
-                border: "1px solid rgba(200,170,240,0.30)", boxShadow: "0 0 14px rgba(100,50,200,0.15)",
-              }}>
-              {sending ? "发送中..." : "发送留言"}
-            </button>
-          </div>
-        ) : (
-          /* 游客模式 */
-          <>
-            <div className="flex items-center gap-3 mb-3">
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatar} className="hidden" />
-              <div onClick={() => fileInputRef.current?.click()}
-                className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 cursor-pointer transition-all hover:scale-105 border-2 border-dashed border-white/15"
-                style={{ background: avatarPreview ? `url(${avatarPreview}) center/cover` : "rgba(255,255,255,0.06)" }}>
-                {!avatarPreview && <span className="text-white/25 text-lg">+</span>}
-              </div>
-              <span className="text-[10px] text-white/25">点击上传头像<br/>下次自动显示</span>
-            </div>
-            <input value={name} onChange={e => setName(e.target.value)}
-              placeholder={defaultName || "你的名字（选填）"} maxLength={20}
-              className="w-full rounded-[14px] px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 outline-none mb-3"
-              style={{ background: "rgba(255,255,255,0.88)", border: "1px solid rgba(255,255,255,0.15)" }} />
-            <textarea value={text} onChange={e => setText(e.target.value)}
-              placeholder="说点什么..." rows={5} maxLength={500}
-              className="w-full rounded-[14px] px-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 outline-none resize-none mb-3"
-              style={{ background: "rgba(255,255,255,0.88)", border: "1px solid rgba(255,255,255,0.15)", minHeight: "130px" }} />
-            {error && <p className="text-[11px] text-red-300/60 mb-2">{error}</p>}
-            <div className="flex gap-3">
-              <button onClick={() => { setText(""); setName(""); setError(""); setAvatarPreview(null); }}
-                disabled={sending}
-                className="flex-1 py-2.5 rounded-[14px] text-xs text-white/55 hover:text-white/80 transition-all disabled:opacity-0"
-                style={{ background: "linear-gradient(135deg, rgba(40,50,180,0.30), rgba(120,60,180,0.30), rgba(200,50,130,0.30))", border: "1px solid rgba(180,160,240,0.15)" }}>
-                清空
-              </button>
-              <button onClick={submit} disabled={!text.trim() || sending}
-                className="flex-1 py-2.5 rounded-[14px] text-xs text-white/95 font-medium tracking-wider transition-all disabled:opacity-30 hover:brightness-110"
-                style={{
-                  background: sending ? "linear-gradient(135deg, rgba(40,50,180,0.40), rgba(200,50,130,0.40))"
-                    : "linear-gradient(135deg, rgba(40,50,180,0.78), rgba(120,60,180,0.78), rgba(200,50,130,0.78))",
-                  border: "1px solid rgba(200,170,240,0.30)", boxShadow: "0 0 14px rgba(100,50,200,0.15)",
-                }}>
-                {sending ? "发送中..." : "发送留言"}
-              </button>
-            </div>
-            <p className="text-[9px] text-white/15 text-center mt-2">每人每天最多 5 条留言</p>
-          </>
-        )}
+      {/* 顶栏 */}
+      <div className="flex items-center justify-between mb-4 shrink-0">
+        <h4 className="text-sm text-white/55 tracking-[0.12em]"
+          style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>
+          💬 留言板
+          {messages.length > 0 && <span className="ml-2 text-white/25">{messages.length}</span>}
+        </h4>
+        <button onClick={fetchBottle} title="捞漂流瓶"
+          className="text-[10px] px-2 py-1 rounded-full bg-white/[0.06] hover:text-white/65 hover:bg-white/[0.12] transition-all"
+          style={{ color: "rgba(255,255,255,0.50)", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
+          🍾 捞瓶
+        </button>
       </div>
 
-      {/* ====== 右侧：留言列表 ====== */}
-      <div className="md:w-[340px] w-full rounded-[18px] p-5 md:p-6 flex flex-col"
-        style={{ background: "rgba(20,15,40,0.08)", border: "1px solid rgba(220,200,245,0.60)", height: "380px" }}>
-
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-sm text-white/50 tracking-[0.12em]">
-            💬 留言板
-            {messages.length > 0 && <span className="ml-2 text-white/20">{messages.length}</span>}
-          </h4>
+      {/* 漂流瓶 */}
+      {bottleMsg && (
+        <div className="mb-4 rounded-xl p-3 relative shrink-0"
+          style={{ background: "rgba(100,140,220,0.15)", border: "1px solid rgba(150,180,240,0.25)" }}>
+          <button onClick={() => setBottleMsg(null)} className="absolute top-1 right-2 text-white/20 hover:text-white/50 text-xs">✕</button>
+          <p className="text-[9px] text-white/35 mb-1">🍾 你捞到了一条留言：</p>
+          <p className="text-[11px] text-white/65 leading-relaxed line-clamp-4"
+            style={{ textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>{bottleMsg.text}</p>
+          <p className="text-[9px] text-white/30 mt-1">{bottleMsg.name} · {bottleMsg.time}</p>
         </div>
+      )}
 
-        <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin" style={{ minHeight: 0 }}>
           {loading ? (
-            <div className="flex items-center justify-center h-full"><span className="text-xs text-white/15 animate-pulse">加载中...</span></div>
+            <div className="flex items-center justify-center h-full"><span className="text-xs animate-pulse" style={{ color: "rgba(255,255,255,0.40)" }}>加载中...</span></div>
           ) : (
             <>
-              {/* 留言列表 */}
               {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <span className="text-3xl mb-3 opacity-25">💬</span>
-                  <p className="text-xs text-white/15">还没有留言，来说第一句吧</p>
+                <div className="flex flex-col items-center justify-center h-full text-center relative">
+                  {/* 空状态星点装饰 */}
+                  <StarDust />
+                  {/* 漂流瓶剪影 */}
+                  <div className="relative z-10 mb-3 opacity-25"
+                    style={{ filter: "drop-shadow(0 0 12px rgba(180,160,240,0.4))" }}>
+                    <svg width="48" height="60" viewBox="0 0 48 60" fill="none">
+                      {/* 瓶身 */}
+                      <path d="M16 14 L16 44 Q16 50 24 50 Q32 50 32 44 L32 14 Z"
+                        stroke="rgba(200,180,240,0.8)" strokeWidth="1.5" fill="none" />
+                      {/* 瓶颈 */}
+                      <path d="M18 14 L18 6 Q18 2 24 2 Q30 2 30 6 L30 14"
+                        stroke="rgba(200,180,240,0.8)" strokeWidth="1.5" fill="none" />
+                      {/* 瓶塞 */}
+                      <rect x="19" y="0" width="10" height="4" rx="2"
+                        fill="rgba(200,180,240,0.5)" />
+                      {/* 瓶中信纸 */}
+                      <rect x="20" y="20" width="8" height="14" rx="1"
+                        fill="rgba(255,220,240,0.15)" />
+                      {/* 星点 */}
+                      <circle cx="28" cy="28" r="1" fill="rgba(255,255,255,0.4)" />
+                      <circle cx="22" cy="34" r="0.7" fill="rgba(255,255,255,0.3)" />
+                    </svg>
+                  </div>
+                  <p className="text-xs relative z-10 mb-1"
+                    style={{ color: "rgba(255,255,255,0.40)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                    还没有留言
+                  </p>
+                  <p className="text-[11px] relative z-10"
+                    style={{ color: "rgba(255,255,255,0.40)", textShadow: "0 1px 3px rgba(0,0,0,0.4)", fontStyle: "italic" }}>
+                    把你的星语装进漂流瓶，掷向深空
+                  </p>
+                  {/* 底部飘浮星点 */}
+                  <div className="flex gap-5 mt-4 relative z-10 opacity-30">
+                    <span className="text-[9px] animate-pulse" style={{ animationDelay: "0s", color: "rgba(200,180,240,0.6)" }}>✦</span>
+                    <span className="text-[7px] animate-pulse" style={{ animationDelay: "0.6s", color: "rgba(255,180,210,0.5)" }}>✦</span>
+                    <span className="text-[9px] animate-pulse" style={{ animationDelay: "1.2s", color: "rgba(180,210,240,0.5)" }}>✦</span>
+                    <span className="text-[7px] animate-pulse" style={{ animationDelay: "1.8s", color: "rgba(220,180,240,0.5)" }}>✦</span>
+                  </div>
                 </div>
               ) : (
                 messages.map(m => renderMessage(m))
@@ -470,6 +533,103 @@ function GuestbookPanel() {
             </>
           )}
         </div>
+
+      {/* ====== 写留言按钮 + 表单（留言列表下方） ====== */}
+      <div className="shrink-0 mt-3">
+        {!showWrite && (
+          <button onClick={() => setShowWrite(true)}
+            className="w-full py-2 rounded-[12px] text-xs font-medium tracking-wider transition-all"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "rgba(255,255,255,0.40)",
+              textShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "rgba(255,255,255,0.75)";
+              e.currentTarget.style.borderColor = "rgba(200,170,240,0.35)";
+              e.currentTarget.style.background = "rgba(200,170,240,0.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "rgba(255,255,255,0.40)";
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+              e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+            }}>
+            ✏️ 写留言
+          </button>
+        )}
+
+        {showWrite && (
+          <div className="mt-3 rounded-[14px] p-4"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(200,180,240,0.18)" }}>
+            {isOwner ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full shrink-0 ring-2 ring-amber-400/30 overflow-hidden"
+                    style={{ boxShadow: "0 0 10px rgba(251,191,36,0.2)" }}>
+                    <img src="/assets/images/avatar.png" alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <span className="text-xs text-white/80 font-medium">站长</span>
+                </div>
+                <textarea value={text} onChange={e => setText(e.target.value)}
+                  placeholder="写下你想说的话..." rows={3} maxLength={500}
+                  className="w-full rounded-[12px] px-3 py-2 text-sm text-white/85 placeholder:text-white/30 outline-none resize-none"
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(200,180,230,0.20)" }} />
+                {error && <p className="text-[11px] text-amber-300/60">{error}</p>}
+                <div className="flex gap-2">
+                  <button onClick={() => setShowWrite(false)}
+                    className="px-3 py-2 rounded-[12px] text-xs text-white/40 hover:text-white/60 transition-colors">
+                    收起
+                  </button>
+                  <button onClick={submit} disabled={!text.trim() || sending}
+                    className="flex-1 py-2 rounded-[12px] text-xs font-medium tracking-wider transition-all disabled:opacity-30 hover:brightness-110"
+                    style={sending
+                      ? { ...BTN_GLASS_STYLE([0.25,0.20,0.18,0.15]), color: "rgba(255,255,255,0.60)" }
+                      : { ...BTN_GLASS_STYLE([0.55,0.42,0.35,0.30]), color: "rgba(255,255,255,0.95)", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }
+                    }>
+                    {sending ? "发送中..." : "发送留言"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatar} className="hidden" />
+                  <div onClick={() => fileInputRef.current?.click()}
+                    className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 cursor-pointer transition-all hover:scale-105 border-2 border-dashed border-white/15"
+                    style={{ background: avatarPreview ? `url(${avatarPreview}) center/cover` : "rgba(255,255,255,0.06)" }}>
+                    {!avatarPreview && <span className="text-white/25 text-base">+</span>}
+                  </div>
+                  <input value={name} onChange={e => setName(e.target.value)}
+                    placeholder={defaultName || "你的名字（选填）"} maxLength={20}
+                    className="flex-1 rounded-[12px] px-3 py-2 text-sm text-white/85 placeholder:text-white/30 outline-none"
+                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(200,180,230,0.20)" }} />
+                </div>
+                <textarea value={text} onChange={e => setText(e.target.value)}
+                  placeholder="说点什么..." rows={3} maxLength={500}
+                  className="w-full rounded-[12px] px-3 py-2 text-sm text-white/85 placeholder:text-white/30 outline-none resize-none"
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(200,180,230,0.20)" }} />
+                {error && <p className="text-[11px] text-red-300/60">{error}</p>}
+                <div className="flex gap-2">
+                  <button onClick={() => { setText(""); setName(""); setError(""); setAvatarPreview(null); setShowWrite(false); }}
+                    className="px-3 py-2 rounded-[12px] text-xs text-white/40 hover:text-white/60 transition-colors">
+                    收起
+                  </button>
+                  <button onClick={submit} disabled={!text.trim() || sending}
+                    className="flex-1 py-2 rounded-[12px] text-xs font-medium tracking-wider transition-all disabled:opacity-30 hover:brightness-110"
+                    style={sending
+                      ? { ...BTN_GLASS_STYLE([0.25,0.20,0.18,0.15]), color: "rgba(255,255,255,0.60)" }
+                      : { ...BTN_GLASS_STYLE([0.55,0.42,0.35,0.30]), color: "rgba(255,255,255,0.95)", textShadow: "0 1px 3px rgba(0,0,0,0.3)" }
+                    }>
+                    {sending ? "..." : "发送留言"}
+                  </button>
+                </div>
+                <p className="text-[9px] text-center"
+                  style={{ color: "rgba(255,255,255,0.45)", textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}>每人每天最多 5 条留言</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -493,13 +653,21 @@ export default function FloatingActions() {
         <div className="rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 anime-glow"
           style={{
             width: "calc(100vw - 20px)", maxWidth: "960px", minHeight: "auto",
-            background: "rgba(20,15,40,0.18)", border: "1px solid rgba(200,180,230,0.55)",
-            boxShadow: "0 0 60px rgba(160,130,220,0.10)",
+            /* 外轻：外层大面板轻透玻璃 */
+            background: "rgba(20,16,42,0.32)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: "1px solid rgba(200,180,230,0.40)",
+            boxShadow: "0 0 60px rgba(160,130,220,0.08), 0 0 0 1px rgba(200,180,230,0.04)",
           }}>
           <div className="flex items-center justify-end mb-4 md:mb-6">
             <button onClick={() => setActive(null)}
               className="w-8 h-8 rounded-full flex items-center justify-center text-white/40 hover:text-white/70 transition-colors"
-              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.10)" }}>
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.10)",
+              }}>
               ✕
             </button>
           </div>
@@ -518,14 +686,35 @@ export default function FloatingActions() {
     <div className="grid grid-cols-2 md:flex md:items-center gap-3 md:gap-6 px-4 md:px-0">
       {actions.map(({ key, label, desc }) => (
         <button key={key} onClick={() => setActive(key)}
-          className="w-full md:w-40 aspect-square md:h-40 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center gap-1.5 md:gap-2 transition-all duration-300 hover:scale-105 hover:-translate-y-1 group cursor-pointer"
+          className="w-full md:w-40 aspect-square md:h-40 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center gap-2 md:gap-2.5 cursor-pointer group"
           style={{
-            background: "transparent",
-            border: "1.5px solid rgba(210,200,245,0.55)",
-            boxShadow: "0 0 20px rgba(180,160,230,0.06)",
+            background: "rgba(15,12,35,0.45)",
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
+            border: "1px solid rgba(200,180,230,0.25)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+            transition: "transform 0.35s cubic-bezier(0.34,1.56,0.64,1), border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-6px) scale(1.04)";
+            e.currentTarget.style.borderColor = "rgba(210,185,245,0.55)";
+            e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,0.18), 0 0 28px rgba(180,150,220,0.16), 0 0 0 1px rgba(200,170,240,0.08)";
+            e.currentTarget.style.background = "rgba(22,16,44,0.58)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0) scale(1)";
+            e.currentTarget.style.borderColor = "rgba(200,180,230,0.25)";
+            e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.10)";
+            e.currentTarget.style.background = "rgba(15,12,35,0.45)";
           }}>
-          <span className="text-base md:text-lg font-semibold tracking-[0.15em] text-white/95 drop-shadow-[0_0_8px_rgba(0,0,0,0.6)]">{label}</span>
-          <span className="text-[10px] text-white/65 tracking-wider drop-shadow-[0_0_6px_rgba(0,0,0,0.5)]">{desc}</span>
+          {/* 细线图标 — 默认安静 */}
+          <div className="text-white/20 group-hover:text-white/50 transition-colors duration-300"
+            style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.4))" }}>
+            {CARD_ICONS[key]}
+          </div>
+          <span className="text-sm md:text-base font-semibold tracking-[0.12em] text-white/85 drop-shadow-[0_0_8px_rgba(0,0,0,0.5)]">{label}</span>
+          <span className="text-[10px] text-white/35 tracking-wider drop-shadow-[0_0_6px_rgba(0,0,0,0.4)]"
+            style={{ textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}>{desc}</span>
         </button>
       ))}
     </div>

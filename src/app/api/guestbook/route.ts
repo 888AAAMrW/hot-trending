@@ -1,8 +1,9 @@
 import {
-  getMessages, addMessage, deleteMessage,
+  getMessages, addMessage, deleteMessage, deleteOwnMessage,
   togglePin, toggleLike, addReply, getRandomMessage,
   checkDailyLimit, checkWriteRate,
 } from "@/lib/guestbook-store";
+import { randomUUID } from "crypto";
 import { getClientKey } from "@/lib/rate-limit";
 
 // GET — 获取留言列表
@@ -42,20 +43,21 @@ export async function POST(request: Request) {
 
   const name = isOwner ? "站长" : String(body.name ?? "").trim().slice(0, 20);
   const avatar = isOwner ? undefined : (typeof body.avatar === "string" ? body.avatar : undefined);
+  const authorKey = isOwner ? undefined : randomUUID();
 
-  const result = await addMessage(name, body.text ?? "", isOwner, avatar);
+  const result = await addMessage(name, body.text ?? "", isOwner, avatar, authorKey);
   if (!result.ok) {
     return Response.json({ error: result.error }, { status: 400 });
   }
 
-  return Response.json({ message: result.message }, { status: 201 });
+  return Response.json({ message: result.message, authorKey }, { status: 201 });
 }
 
 // PATCH — 置顶/点赞/回复/删除
 export async function PATCH(request: Request) {
   const clientKey = getClientKey(request);
 
-  let body: { id?: number; action?: string; text?: string; isOwner?: boolean };
+  let body: { id?: number; action?: string; text?: string; isOwner?: boolean; authorKey?: string };
   try { body = await request.json(); } catch {
     return Response.json({ error: "请求格式错误" }, { status: 400 });
   }
@@ -89,6 +91,12 @@ export async function PATCH(request: Request) {
         await deleteMessage(body.id);
         return Response.json({ ok: true });
       }
+    }
+    case "delete-self": {
+      if (!body.authorKey) return Response.json({ error: "无权操作" }, { status: 403 });
+      const ok = await deleteOwnMessage(body.id, body.authorKey);
+      if (!ok) return Response.json({ error: "无权删除此留言" }, { status: 403 });
+      return Response.json({ ok: true });
     }
     default:
       return Response.json({ error: "未知操作" }, { status: 400 });

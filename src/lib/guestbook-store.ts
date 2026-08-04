@@ -18,6 +18,7 @@ export interface GuestbookMessage {
   likes: number;
   avatar?: string;
   isOwner: boolean;
+  authorKey?: string;
   replies: Reply[];
 }
 
@@ -64,6 +65,7 @@ export async function addMessage(
   text: string,
   isOwner: boolean,
   avatar?: string,
+  authorKey?: string,
 ): Promise<{ ok: true; message: GuestbookMessage } | { ok: false; error: string }> {
   // 安全检查
   if (containsAttack(text) || containsAttack(name)) {
@@ -86,6 +88,7 @@ export async function addMessage(
     likes: 0,
     avatar: avatar?.startsWith("data:image/") ? avatar : undefined,
     isOwner,
+    authorKey: isOwner ? undefined : authorKey,
     replies: [],
   };
 
@@ -102,6 +105,16 @@ export async function addMessage(
 export async function deleteMessage(id: number): Promise<void> {
   const all = await getAll();
   await saveAll(all.filter((m) => m.id !== id));
+}
+
+// ====== 删除自己的留言（需 authorKey 验证） ======
+
+export async function deleteOwnMessage(id: number, authorKey: string): Promise<boolean> {
+  const all = await getAll();
+  const msg = all.find((m) => m.id === id);
+  if (!msg || msg.authorKey !== authorKey) return false;
+  await saveAll(all.filter((m) => m.id !== id));
+  return true;
 }
 
 // ====== 置顶 ======

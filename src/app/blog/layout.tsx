@@ -4,7 +4,8 @@ import AtmosphereEffects from "@/components/blog/AtmosphereEffects";
 import BlogNav from "@/components/blog/BlogNav";
 import ProfileTags from "@/components/blog/ProfileTags";
 import TimeOrb from "@/components/blog/TimeOrb";
-import ColorWheel from "@/components/blog/ColorWheel";
+import NowCard from "@/components/blog/NowCard";
+import SocialIcons from "@/components/blog/SocialIcons";
 import MobileIdentity from "@/components/blog/MobileIdentity";
 
 export const metadata: Metadata = {
@@ -41,30 +42,44 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
         />
       </div>
 
-      {/* ========== 移动：图片背景 ========== */}
+      {/* ========== 移动：与桌面统一背景 ========== */}
       <div className="fixed inset-0 z-0 block md:hidden bg-gray-950">
         <img
-          src="/assets/images/background-mobile.jpg"
+          src="/assets/images/background-desktop.png"
           alt=""
           fetchPriority="high"
           className="w-full h-full object-cover"
         />
       </div>
 
+      {/* ========== 全局压暗垫层：半透明深色渐变 + 暗角 ========== */}
+      <div className="fixed inset-0 z-[1] pointer-events-none" aria-hidden="true"
+        style={{
+          background: [
+            /* 中心柔光过渡 */
+            "radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(5,3,18,0.38) 68%, rgba(3,2,14,0.52) 100%)",
+            /* 底部加深 */
+            "linear-gradient(to top, rgba(3,2,14,0.32) 0%, transparent 50%)",
+            /* 顶部微压 */
+            "linear-gradient(to bottom, rgba(3,2,14,0.16) 0%, transparent 30%)",
+          ].join(", "),
+        }} />
+
       {/* ========== 余烬特效 ========== */}
       <AtmosphereEffects />
 
       {/* ========== 顶部导航毛玻璃条 ========== */}
-      <header className="fixed top-0 left-0 right-0 z-30 px-8 py-4 flex items-center justify-between
+      <header className="fixed top-0 left-0 right-0 z-30 px-8 py-5 flex items-center justify-center
                         border-b border-white/[0.06]"
              style={{
                background: "linear-gradient(to right, rgba(20,25,50,0.02), rgba(20,25,50,0.12))",
                backdropFilter: "blur(6px)",
                WebkitBackdropFilter: "blur(6px)",
              }}>
+        {/* 返回主站 — 左悬浮 */}
         <Link
           href="https://starrynova.cc"
-          className="group flex items-center gap-2 text-[11px] px-3 py-1.5 rounded-full
+          className="absolute left-8 group flex items-center gap-2 text-[13px] px-4 py-2 rounded-full
                      text-amber-100/85 hover:text-amber-50/95 tracking-[0.1em] transition-all duration-200"
           style={{
             fontFamily: "'Orbitron', monospace",
@@ -82,9 +97,8 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
       </header>
 
       {/* ========== 左侧浮层组 ========== */}
-      {/* ========== 左侧浮层组 ========== */}
-      <div className="fixed top-36 z-20 hidden md:flex flex-col items-center gap-5"
-           style={{ left: "60px" }}>
+      <div className="fixed top-36 z-20 hidden md:flex flex-col items-center"
+           style={{ left: "32px" }}>
         {/* 头像 */}
         <div className="w-44 h-44 rounded-full overflow-hidden shrink-0 bg-white/[0.03]"
              style={{
@@ -100,7 +114,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* 标签卡 */}
-        <div className="rounded-2xl p-4 relative"
+        <div className="rounded-2xl p-4 relative mt-8"
              style={{
                width: "256px",
                background: "rgba(255,255,255,0.07)",
@@ -129,21 +143,27 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
           <ProfileTags />
         </div>
 
-        {/* 色轮 */}
-        <div className="mt-10">
-          <ColorWheel />
+        {/* NowCard */}
+        <div className="mt-8">
+          <NowCard />
         </div>
       </div>
 
-      {/* ========== 右上区：时钟 ========== */}
+      {/* ========== 右上区：时钟 — 与导航右缘对齐 ========== */}
       <div className="fixed z-20 hidden md:block"
-           style={{ top: "96px", right: "60px" }}>
+           style={{ top: "96px", right: "32px" }}>
         <TimeOrb />
       </div>
 
-      {/* ========== 内容区：居中 ========== */}
+      {/* ========== 右下角：社交图标 ========== */}
+      <div className="fixed z-20 hidden md:block"
+           style={{ bottom: "32px", right: "32px" }}>
+        <SocialIcons />
+      </div>
+
+      {/* ========== 内容区 ========== */}
       <main className="relative z-10 pt-10 md:pt-12 pb-24 md:pb-16 px-5 md:px-0
-                      md:max-w-xl md:mx-auto">
+                      md:max-w-4xl md:mx-auto">
         {/* 移动端身份区（头像+时钟+标签） */}
         <MobileIdentity />
         {children}
