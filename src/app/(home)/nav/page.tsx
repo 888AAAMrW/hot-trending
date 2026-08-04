@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import Starfield from "@/components/Starfield";
-import WarpTransition from "@/components/WarpTransition";
+import Starfield from "@/components/shared/Starfield";
+import WarpTransition from "@/components/shared/WarpTransition";
 
 const PROJECTS = [
   {
-    name: "实时热搜",
+    name: "星闻",
     desc: "知乎 · B站 · 微博一站式热搜聚合",
     url: "https://hot.starrynova.cc",
-    icon: "🔥",
+    icon: "⭐",
     color: "#E6162D",
   },
   {

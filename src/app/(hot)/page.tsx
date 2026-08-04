@@ -2,11 +2,11 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import useSWR from "swr";
-import Starfield from "@/components/Starfield";
-import type { CardAnchor } from "@/components/Starfield";
-import Header from "@/components/Header";
-import CategoryBar from "@/components/CategoryBar";
-import SearchBar from "@/components/SearchBar";
+import Starfield from "@/components/shared/Starfield";
+import type { CardAnchor } from "@/components/shared/Starfield";
+import Header from "@/components/hot/Header";
+import CategoryBar from "@/components/hot/CategoryBar";
+import SearchBar from "@/components/hot/SearchBar";
 import { CATEGORIES } from "@/lib/categories";
 import { PLATFORM_META } from "@/lib/types";
 import type { TrendsResponse, HotItem, PlatformId, PlatformData } from "@/lib/types";

@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getPublishedPosts, getPostBySlug } from "@/lib/blog";
-import TagBadge from "@/components/TagBadge";
-import GiscusComments from "@/components/GiscusComments";
+import TagBadge from "@/components/blog/TagBadge";
+import GiscusComments from "@/components/blog/GiscusComments";
 
 interface Props {
   params: Promise<{ slug: string }>;

@@ -1,14 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   title: {
-    default: "实时热搜聚合",
+    default: "Starry Nova",
     template: "%s — Starry Nova",
   },
-  description: "知乎 · B站 · 微博一站式热搜聚合",
+  description: "深空观测站 — 星闻 · 博客 · 导航",
 };
 
 export default function RootLayout({

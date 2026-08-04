@@ -1,4 +1,4 @@
-import FloatingActions from "@/components/FloatingActions";
+import FloatingActions from "@/components/blog/FloatingActions";
 
 export default function BlogPage() {
   return (

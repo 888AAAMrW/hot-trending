@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import AtmosphereEffects from "@/components/AtmosphereEffects";
-import BlogNav from "@/components/BlogNav";
-import ProfileTags from "@/components/ProfileTags";
-import TimeOrb from "@/components/TimeOrb";
-import ColorWheel from "@/components/ColorWheel";
+import AtmosphereEffects from "@/components/blog/AtmosphereEffects";
+import BlogNav from "@/components/blog/BlogNav";
+import ProfileTags from "@/components/blog/ProfileTags";
+import TimeOrb from "@/components/blog/TimeOrb";
+import ColorWheel from "@/components/blog/ColorWheel";
+import MobileIdentity from "@/components/blog/MobileIdentity";
 
 export const metadata: Metadata = {
   title: {
@@ -136,13 +137,15 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
 
       {/* ========== 右上区：时钟 ========== */}
       <div className="fixed z-20 hidden md:block"
-           style={{ top: "96px", right: "2%" }}>
+           style={{ top: "96px", right: "60px" }}>
         <TimeOrb />
       </div>
 
       {/* ========== 内容区：居中 ========== */}
       <main className="relative z-10 pt-10 md:pt-12 pb-24 md:pb-16 px-5 md:px-0
                       md:max-w-xl md:mx-auto">
+        {/* 移动端身份区（头像+时钟+标签） */}
+        <MobileIdentity />
         {children}
       </main>
 

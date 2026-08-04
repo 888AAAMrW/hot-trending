@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getAllTags, getPostsByTag } from "@/lib/blog";
-import BlogCard from "@/components/BlogCard";
+import BlogCard from "@/components/blog/BlogCard";
 
 interface Props {
   params: Promise<{ tag: string }>;
